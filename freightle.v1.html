@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Freightle — Can you identify the document?</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { min-height: 100%; background: #080d14; color: #e2e8f0; font-family: 'DM Sans', sans-serif; -webkit-font-smoothing: antialiased; }
+
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+  @keyframes slideIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+  @keyframes barFill { from{width:0%} to{width:65%} }
+  @keyframes fadeIn { from{opacity:0} to{opacity:1} }
+  @keyframes sheetUp { from{transform:translateY(100%)} to{transform:translateY(0)} }
+
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 2px; }
+
+  /* TOP BAR */
+  #topbar {
+    background: #0a1020;
+    border-bottom: 1px solid #1e293b;
+    padding: 0 16px;
+    position: sticky; top: 0; z-index: 100;
+  }
+  #topbar-inner {
+    max-width: 1200px; margin: 0 auto;
+    height: 52px; display: flex; align-items: center; justify-content: space-between;
+  }
+  .logo { display: flex; align-items: center; gap: 8px; }
+  .logo-mark { font-size: 18px; color: #3b82f6; }
+  .logo-text { font-family: 'Space Mono', monospace; font-weight: 700; font-size: 15px; letter-spacing: 0.15em; color: #f1f5f9; }
+  .logo-badge { background: #1e3a5f; color: #60a5fa; font-size: 9px; font-weight: 600; letter-spacing: 0.1em; padding: 2px 5px; border-radius: 4px; }
+  #topbar-right { display: flex; align-items: center; gap: 10px; }
+  #mode-btn {
+    background: transparent; border: 1px solid #1e293b; color: #94a3b8;
+    padding: 5px 12px; border-radius: 6px; font-size: 12px; cursor: pointer;
+    font-family: 'DM Sans', sans-serif; transition: filter 0.15s;
+  }
+  #mode-btn:hover { filter: brightness(1.2); }
+  .shp-tag { font-family: 'Space Mono', monospace; font-size: 10px; color: #334155; }
+
+  /* MAIN LAYOUT */
+  #main {
+    max-width: 1200px; margin: 0 auto; width: 100%;
+    padding: 28px 24px;
+    display: flex; gap: 24px; align-items: flex-start;
+  }
+  #game-area { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 18px; }
+
+  /* PROMPT */
+  .prompt-chip {
+    display: inline-flex; align-self: flex-start;
+    background: #0f1f35; border: 1px solid #1e3a5f; color: #60a5fa;
+    font-size: 11px; font-weight: 500; padding: 4px 12px; border-radius: 20px; letter-spacing: 0.03em;
+  }
+  #prompt-title { font-size: 18px; font-weight: 600; color: #f1f5f9; line-height: 1.3; margin: 6px 0 4px; }
+  #prompt-sub { font-size: 13px; color: #475569; }
+
+  /* DOCUMENT CARD */
+  #doc-card {
+    background: #0d1627; border: 1px solid #1e293b; border-radius: 12px;
+    overflow: hidden; animation: fadeIn 0.3s ease;
+  }
+  .card-header {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 16px; border-bottom: 1px solid #1e293b; background: #0a1020;
+  }
+  .doc-badge {
+    background: #1e3a5f; color: #60a5fa; font-family: 'Space Mono', monospace;
+    font-weight: 700; font-size: 12px; padding: 3px 8px; border-radius: 5px;
+    letter-spacing: 0.05em; flex-shrink: 0;
+  }
+  .doc-meta { flex: 1; min-width: 0; }
+  .doc-ref { font-family: 'Space Mono', monospace; font-size: 10px; color: #64748b; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .doc-redacted-count { font-size: 10px; color: #ef4444; opacity: 0.8; }
+  .redaction-dots { display: flex; gap: 4px; flex-shrink: 0; }
+  .rdot { width: 7px; height: 7px; border-radius: 50%; transition: background 0.3s; }
+
+  .doc-grid { padding: 2px 0; }
+  .doc-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 8px 16px; border-bottom: 1px solid #111827; gap: 12px;
+  }
+  .field-label { font-size: 11px; color: #475569; font-weight: 500; white-space: nowrap; min-width: 110px; flex-shrink: 0; }
+  .field-value { font-size: 12px; color: #cbd5e1; font-family: 'Space Mono', monospace; text-align: right; word-break: break-all; }
+  .field-redacted { color: #1e293b; background: #1e293b; border-radius: 3px; user-select: none; letter-spacing: 0.15em; }
+  .card-footer {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 8px 16px; border-top: 1px solid #111827; background: #080d14;
+  }
+  .footer-txt { font-size: 9px; color: #1e293b; letter-spacing: 0.05em; }
+
+  /* HINTS */
+  #hint-area { display: flex; flex-direction: column; gap: 8px; }
+  .hint-item {
+    display: flex; align-items: flex-start; gap: 8px;
+    background: #0f1a2e; border: 1px solid #1e3a5f; border-radius: 8px;
+    padding: 9px 12px; animation: slideIn 0.25s ease;
+  }
+  .hint-text { color: #93c5fd; line-height: 1.4; font-size: 13px; }
+
+  /* GUESS BUTTONS */
+  #guess-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 8px;
+  }
+  .guess-btn {
+    background: #0d1627; border: 1px solid #1e293b; color: #94a3b8;
+    padding: 12px 14px; border-radius: 8px; font-size: 13px; font-weight: 500;
+    cursor: pointer; text-align: left; font-family: 'DM Sans', sans-serif;
+    transition: filter 0.15s; line-height: 1.3;
+  }
+  .guess-btn:hover:not(:disabled):not(.wrong) { filter: brightness(1.2); border-color: #3b82f6; color: #e2e8f0; }
+  .guess-btn.wrong { background: #1a0a0a; border-color: #3f1010; color: #6b1f1f; cursor: not-allowed; }
+  .guess-btn:disabled { cursor: not-allowed; opacity: 0.5; }
+
+  /* DESKTOP LUCA SIDEBAR */
+  #luca-sidebar {
+    width: 300px; flex-shrink: 0;
+    background: #0a1020; border: 1px solid #1e293b; border-radius: 12px;
+    position: sticky; top: 68px; max-height: calc(100vh - 88px); overflow-y: auto;
+  }
+
+  /* LUCA SHARED CONTENT */
+  .luca-header { display: flex; align-items: center; gap: 12px; padding: 14px 16px; }
+  .luca-avatar {
+    width: 34px; height: 34px;
+    background: linear-gradient(135deg, #1d4ed8, #3b82f6);
+    border-radius: 9px; display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 15px; color: #fff; flex-shrink: 0;
+  }
+  .luca-name { font-size: 14px; font-weight: 600; color: #f1f5f9; }
+  .luca-role { font-size: 10px; color: #475569; }
+  .luca-status { margin-left: auto; display: flex; align-items: center; gap: 5px; }
+  .luca-pulse { width: 7px; height: 7px; background: #22c55e; border-radius: 50%; animation: pulse 2s infinite; }
+  .luca-online { font-size: 10px; color: #22c55e; }
+  .luca-divider { border-bottom: 1px solid #1e293b; margin: 0 16px; }
+
+  .luca-idle { padding: 28px 16px; text-align: center; }
+  .luca-idle-icon { font-size: 28px; opacity: 0.4; margin-bottom: 14px; }
+  .luca-idle-text { font-size: 13px; color: #475569; line-height: 1.6; margin-bottom: 16px; }
+  .luca-idle-bar { width: 100%; height: 3px; background: #1e293b; border-radius: 2px; overflow: hidden; }
+  .luca-idle-fill { height: 100%; background: linear-gradient(90deg, #1d4ed8, #3b82f6); animation: barFill 2s ease-in-out infinite alternate; }
+
+  .luca-content { padding: 16px; display: flex; flex-direction: column; gap: 18px; }
+  .luca-section { display: flex; flex-direction: column; gap: 7px; }
+  .luca-section-label { font-size: 9px; font-weight: 600; letter-spacing: 0.1em; color: #334155; text-transform: uppercase; }
+  .luca-doc-type { font-size: 15px; font-weight: 600; color: #60a5fa; font-family: 'Space Mono', monospace; }
+  .luca-json {
+    background: #080d14; border: 1px solid #1e293b; border-radius: 8px; padding: 10px;
+    display: flex; flex-direction: column; gap: 4px;
+    font-family: 'Space Mono', monospace; font-size: 9.5px; animation: slideIn 0.3s ease;
+  }
+  .json-row { display: flex; gap: 3px; flex-wrap: wrap; }
+  .json-key { color: #60a5fa; }
+  .json-colon { color: #475569; }
+  .json-val { color: #a7f3d0; word-break: break-all; }
+  .luca-note { font-size: 12px; color: #94a3b8; line-height: 1.6; background: #080d14; border: 1px solid #1e3a5f; border-radius: 8px; padding: 10px 12px; }
+  .luca-timing { font-size: 10px; color: #334155; padding-top: 8px; border-top: 1px solid #111827; }
+
+  /* MOBILE BOTTOM TAB */
+  #luca-tab {
+    display: none;
+    position: fixed; bottom: 0; left: 0; right: 0; z-index: 90;
+    background: #0a1020; border-top: 1px solid #1e3a5f;
+    padding: 0 20px; height: 60px;
+    align-items: center; justify-content: space-between;
+    cursor: pointer; border-left: none; border-right: none; border-bottom: none;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .luca-tab-left { display: flex; align-items: center; gap: 10px; }
+  .luca-tab-avatar {
+    width: 32px; height: 32px;
+    background: linear-gradient(135deg, #1d4ed8, #3b82f6);
+    border-radius: 8px; display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 14px; color: #fff;
+  }
+  .luca-tab-label { font-size: 14px; font-weight: 600; color: #e2e8f0; }
+  .luca-tab-badge {
+    background: #0f3020; border: 1px solid #166534; color: #4ade80;
+    font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 10px;
+    letter-spacing: 0.05em; display: none;
+  }
+  .luca-tab-chevron { font-size: 12px; color: #475569; }
+
+  /* MOBILE BOTTOM SHEET */
+  #luca-sheet {
+    display: none;
+    position: fixed; bottom: 60px; left: 0; right: 0; z-index: 89;
+    background: #0a1020; border: 1px solid #1e293b; border-radius: 16px 16px 0 0;
+    max-height: 70vh; flex-direction: column;
+    box-shadow: 0 -8px 40px rgba(0,0,0,0.6); animation: sheetUp 0.25s ease;
+  }
+  #luca-sheet.open { display: flex; }
+  .sheet-handle { width: 36px; height: 4px; background: #1e293b; border-radius: 2px; margin: 12px auto 0; flex-shrink: 0; }
+  #sheet-scroll { overflow-y: auto; flex: 1; padding-bottom: 16px; }
+
+  /* SUCCESS OVERLAY */
+  #success-overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.75); backdrop-filter: blur(4px);
+    align-items: center; justify-content: center;
+    z-index: 200; padding: 20px; animation: fadeIn 0.2s ease;
+  }
+  #success-overlay.open { display: flex; }
+  .success-card {
+    background: #0d1627; border: 1px solid #1e3a5f; border-radius: 16px;
+    padding: 28px 24px; max-width: 420px; width: 100%;
+    text-align: center; display: flex; flex-direction: column; align-items: center; gap: 10px;
+    animation: slideIn 0.3s ease;
+  }
+  .success-stars { display: flex; gap: 6px; color: #f59e0b; font-size: 26px; }
+  .success-title { font-size: 11px; color: #475569; letter-spacing: 0.1em; text-transform: uppercase; }
+  .success-type { font-size: 22px; font-weight: 700; color: #60a5fa; font-family: 'Space Mono', monospace; }
+  .success-meta { font-size: 13px; color: #94a3b8; }
+  .success-divider { width: 36px; height: 1px; background: #1e293b; margin: 4px 0; }
+  .success-fact { font-size: 12px; color: #64748b; line-height: 1.6; text-align: left; background: #080d14; padding: 12px; border-radius: 8px; border: 1px solid #1e293b; }
+  #next-btn {
+    margin-top: 6px; width: 100%;
+    background: linear-gradient(135deg, #1d4ed8, #3b82f6); color: #fff;
+    border: none; padding: 12px 24px; border-radius: 8px;
+    font-size: 14px; font-weight: 600; cursor: pointer; font-family: 'DM Sans', sans-serif;
+  }
+  #next-btn:hover { filter: brightness(1.1); }
+
+  /* MOBILE RESPONSIVE */
+  @media (max-width: 767px) {
+    #main { padding: 16px 14px 0; flex-direction: column; }
+    #luca-sidebar { display: none; }
+    #luca-tab { display: flex; }
+    #game-area { padding-bottom: 72px; }
+    #prompt-title { font-size: 16px; }
+    .field-label { min-width: 90px; font-size: 10px; }
+    .field-value { font-size: 11px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<header id="topbar">
+  <div id="topbar-inner">
+    <div class="logo">
+      <span class="logo-mark">⬡</span>
+      <span class="logo-text">FREIGHTLE</span>
+      <span class="logo-badge">BETA</span>
+    </div>
+    <div id="topbar-right">
+      <button id="mode-btn">🎲 Free Play</button>
+      <span class="shp-tag">SHP-2024-0441</span>
+    </div>
+  </div>
+</header>
+
+<!-- MAIN -->
+<div id="main">
+  <!-- GAME AREA -->
+  <div id="game-area">
+    <div>
+      <span class="prompt-chip" id="mode-chip">📅 Daily Challenge</span>
+      <h2 id="prompt-title">What type of logistics document is this?</h2>
+      <p id="prompt-sub">Study the visible fields. Some information has been redacted.</p>
+    </div>
+
+    <div id="doc-card"></div>
+    <div id="hint-area"></div>
+    <div id="guess-grid"></div>
+  </div>
+
+  <!-- DESKTOP LUCA SIDEBAR -->
+  <aside id="luca-sidebar">
+    <div id="luca-sidebar-content"></div>
+  </aside>
+</div>
+
+<!-- MOBILE LUCA TAB -->
+<button id="luca-tab" onclick="toggleSheet()">
+  <div class="luca-tab-left">
+    <div class="luca-tab-avatar">L</div>
+    <span class="luca-tab-label">Luca's Breakdown</span>
+    <span class="luca-tab-badge" id="luca-tab-badge">Ready</span>
+  </div>
+  <span class="luca-tab-chevron" id="tab-chevron">▲</span>
+</button>
+
+<!-- MOBILE BOTTOM SHEET -->
+<div id="luca-sheet">
+  <div class="sheet-handle"></div>
+  <div id="sheet-scroll"></div>
+</div>
+
+<!-- SUCCESS OVERLAY -->
+<div id="success-overlay">
+  <div class="success-card">
+    <div class="success-stars" id="success-stars"></div>
+    <div class="success-title">Correctly Identified</div>
+    <div class="success-type" id="success-type"></div>
+    <div class="success-meta" id="success-meta"></div>
+    <div class="success-divider"></div>
+    <div class="success-fact" id="success-fact"></div>
+    <button id="next-btn" onclick="nextDoc()">Next Document →</button>
+  </div>
+</div>
+
+<script>
+// ─── DATA ────────────────────────────────────────────────────────────────────
+const DOCUMENTS = [
+  {
+    id: "CI-2024-00441", type: "Commercial Invoice", badge: "CI",
+    hints: ["Contains unit pricing and total value","References buyer and seller entities","Required for customs valuation"],
+    lucaExtraction: { invoice_number:"INV-2024-00441", seller:"Hangzhou Precision Mfg. Co.", buyer:"████████ GmbH", origin_country:"CN", destination_country:"DE", incoterms:"FOB Shanghai", currency:"USD", total_value:"$47,320.00", payment_terms:"30 days net" },
+    lucaNote: "Flagged for customs hold: declared value 18% below market benchmark.",
+    content: [
+      {label:"Document Ref", value:"INV-2024-00441", visible:true},
+      {label:"Issue Date", value:"14 Mar 2024", visible:true},
+      {label:"Seller", value:"Hangzhou Precision Mfg. Co., Ltd.", visible:true},
+      {label:"Buyer", value:"████████ GmbH, Berlin", visible:false},
+      {label:"Incoterms", value:"FOB Shanghai", visible:true},
+      {label:"Currency", value:"USD", visible:true},
+      {label:"Description", value:"Aluminum CNC components (3 SKUs)", visible:true},
+      {label:"Unit Price", value:"$██.00 per kg", visible:false},
+      {label:"Total Qty", value:"2,400 kg", visible:true},
+      {label:"Total Value", value:"████████", visible:false},
+      {label:"HS Code", value:"7616.99", visible:true},
+      {label:"Payment Terms", value:"████████", visible:false},
+    ]
+  },
+  {
+    id: "BL-SHFE-2024-7731", type: "Bill of Lading", badge: "B/L",
+    hints: ["Issued by a shipping carrier","Used to track cargo on a vessel","Title document for goods ownership"],
+    lucaExtraction: { bl_number:"SHFE-2024-7731", shipper:"Hangzhou Precision Mfg.", consignee:"████████ GmbH", vessel:"MSC VIRTUOSA", voyage:"422W", port_of_loading:"Shanghai (CNSHA)", port_of_discharge:"Hamburg (DEHAM)", container_count:2, container_type:"20GP", gross_weight_kg:2450 },
+    lucaNote: "ETA Hamburg: 28 Apr 2024. Auto-triggered arrival notice workflow.",
+    content: [
+      {label:"B/L Number", value:"SHFE-2024-7731", visible:true},
+      {label:"Shipper", value:"Hangzhou Precision Mfg. Co., Ltd.", visible:true},
+      {label:"Consignee", value:"████████████████", visible:false},
+      {label:"Notify Party", value:"Rhenus Logistics GmbH, Hamburg", visible:true},
+      {label:"Vessel Name", value:"MSC VIRTUOSA", visible:true},
+      {label:"Voyage No.", value:"422W", visible:true},
+      {label:"Port of Loading", value:"Shanghai (CNSHA)", visible:true},
+      {label:"Port of Discharge", value:"██████ (DEHAM)", visible:false},
+      {label:"Containers", value:"2 × 20GP", visible:true},
+      {label:"Gross Weight", value:"2,450 KG", visible:true},
+      {label:"Freight Terms", value:"████████", visible:false},
+      {label:"Date of Issue", value:"22 Mar 2024", visible:true},
+    ]
+  },
+  {
+    id: "PL-HZP-2024-0441", type: "Packing List", badge: "PL",
+    hints: ["Details physical dimensions and weights","Lists individual carton contents","No financial values — purely logistical"],
+    lucaExtraction: { packing_list_ref:"PL-HZP-0441", total_cartons:48, total_gross_weight_kg:2450, total_net_weight_kg:2318, total_cbm:14.4, carton_dims_cm:"60×40×35" },
+    lucaNote: "CBM verified against booking. No dimensional discrepancy detected.",
+    content: [
+      {label:"PL Reference", value:"PL-HZP-0441", visible:true},
+      {label:"Date", value:"13 Mar 2024", visible:true},
+      {label:"Exporter", value:"Hangzhou Precision Mfg.", visible:true},
+      {label:"Total Cartons", value:"48", visible:true},
+      {label:"SKU 1 (HZP-4401)", value:"16 cartons × 22 kg", visible:true},
+      {label:"SKU 2 (HZP-4402)", value:"20 cartons × ██ kg", visible:false},
+      {label:"SKU 3 (HZP-4403)", value:"████████", visible:false},
+      {label:"Gross Weight", value:"2,450 KG", visible:true},
+      {label:"Net Weight", value:"████████", visible:false},
+      {label:"Total CBM", value:"14.4 m³", visible:true},
+      {label:"Carton Dims", value:"60 × 40 × 35 cm", visible:true},
+      {label:"Marks & Numbers", value:"████████", visible:false},
+    ]
+  },
+  {
+    id: "CD-DEHAM-2024-8812", type: "Customs Declaration", badge: "CD",
+    hints: ["Filed with a government authority","Contains HS codes and duty rates","Required for import/export clearance"],
+    lucaExtraction: { declaration_number:"DEHAM-2024-8812", declarant:"Rhenus Logistics GmbH", customs_office:"Hamburg Port (DE002700)", hs_code:"7616.99.90", customs_value_eur:43280, duty_rate_pct:2.7, duty_payable_eur:1168.56, vat_rate_pct:19 },
+    lucaNote: "Duty calculation cross-checked. EUR/USD rate applied: 0.914.",
+    content: [
+      {label:"Declaration No.", value:"DEHAM-2024-8812", visible:true},
+      {label:"Customs Office", value:"Hamburg Port (DE002700)", visible:true},
+      {label:"Declarant", value:"Rhenus Logistics GmbH", visible:true},
+      {label:"Importer", value:"████████████████", visible:false},
+      {label:"HS Code", value:"7616.99.90", visible:true},
+      {label:"Regime", value:"40 — Release for Free Circulation", visible:true},
+      {label:"Customs Value", value:"EUR ██,███", visible:false},
+      {label:"Duty Rate", value:"████", visible:false},
+      {label:"Duty Payable", value:"EUR 1,168.56", visible:true},
+      {label:"VAT Rate", value:"19%", visible:true},
+      {label:"Country of Origin", value:"CN", visible:true},
+      {label:"Authorisation", value:"████████████████", visible:false},
+    ]
+  },
+  {
+    id: "PO-GLOB-2024-0199", type: "Purchase Order", badge: "PO",
+    hints: ["Issued by the buyer, not the seller","Triggers the manufacturing process","Contains delivery expectations"],
+    lucaExtraction: { po_number:"GLOB-2024-0199", supplier:"Hangzhou Precision Mfg.", issue_date:"2024-02-01", required_delivery:"2024-04-15", line_items:3, total_value_usd:47320, payment_terms:"30 days net", delivery_terms:"FOB Shanghai" },
+    lucaNote: "PO to shipment lead time: 52 days. Within SLA threshold.",
+    content: [
+      {label:"PO Number", value:"GLOB-2024-0199", visible:true},
+      {label:"Issue Date", value:"01 Feb 2024", visible:true},
+      {label:"Buyer", value:"████████ GmbH, Berlin", visible:false},
+      {label:"Supplier", value:"Hangzhou Precision Mfg. Co., Ltd.", visible:true},
+      {label:"Required Delivery", value:"15 Apr 2024", visible:true},
+      {label:"Item 1", value:"HZP-4401 — 800 kg @ $██/kg", visible:false},
+      {label:"Item 2", value:"HZP-4402 — 1,000 kg", visible:true},
+      {label:"Item 3", value:"HZP-4403 — 600 kg", visible:true},
+      {label:"Total Value", value:"USD ██████", visible:false},
+      {label:"Payment Terms", value:"30 days net", visible:true},
+      {label:"Delivery Terms", value:"FOB Shanghai", visible:true},
+      {label:"Authorised By", value:"████████████████", visible:false},
+    ]
+  },
+  {
+    id: "AN-HZP-DEHAM-20240428", type: "Arrival Notice", badge: "AN",
+    hints: ["Sent by the carrier or freight agent","Triggered near port arrival","Prompts consignee to prepare for pickup"],
+    lucaExtraction: { notice_ref:"AN-DEHAM-20240428", vessel:"MSC VIRTUOSA", eta:"2024-04-28", port:"Hamburg (DEHAM)", bl_reference:"SHFE-2024-7731", containers:"MSCU3401287, MSCU3401288", free_time_days:7, demurrage_eur_day:85 },
+    lucaNote: "Free time expiry: 05 May. Customs not yet filed — risk flag raised.",
+    content: [
+      {label:"Notice Ref", value:"AN-DEHAM-20240428", visible:true},
+      {label:"To", value:"████████████████ GmbH", visible:false},
+      {label:"Vessel", value:"MSC VIRTUOSA / 422W", visible:true},
+      {label:"ETA", value:"28 April 2024", visible:true},
+      {label:"Port", value:"Hamburg (DEHAM)", visible:true},
+      {label:"B/L Ref", value:"SHFE-2024-7731", visible:true},
+      {label:"Container 1", value:"MSCU3401287 (20GP)", visible:true},
+      {label:"Container 2", value:"MSCU3401288 (20GP)", visible:true},
+      {label:"Free Time", value:"██ days from discharge", visible:false},
+      {label:"Demurrage", value:"████ EUR/day after free time", visible:false},
+      {label:"Customs Status", value:"████████", visible:false},
+      {label:"Agent Contact", value:"Rhenus Hamburg — ops@rhenus.de", visible:true},
+    ]
+  },
+  {
+    id: "BC-ZEN-2024-SH0441", type: "Booking Confirmation", badge: "BC",
+    hints: ["Confirms cargo space on a vessel","Issued before the Bill of Lading","Contains pickup and cutoff deadlines"],
+    lucaExtraction: { booking_ref:"ZEN-SH0441", carrier:"MSC", shipper:"Hangzhou Precision Mfg.", origin_port:"Shanghai (CNSHA)", destination_port:"Hamburg (DEHAM)", vessel:"MSC VIRTUOSA", departure:"2024-03-25", cargo_cutoff:"2024-03-22", container_type:"20GP × 2" },
+    lucaNote: "Booking auto-matched to PO GLOB-2024-0199. ETD confirmed.",
+    content: [
+      {label:"Booking Ref", value:"ZEN-SH0441", visible:true},
+      {label:"Carrier", value:"MSC", visible:true},
+      {label:"Shipper", value:"Hangzhou Precision Mfg. Co.", visible:true},
+      {label:"Origin", value:"Shanghai (CNSHA)", visible:true},
+      {label:"Destination", value:"██████ (DEHAM)", visible:false},
+      {label:"Vessel / Voyage", value:"MSC VIRTUOSA / 422W", visible:true},
+      {label:"ETD", value:"25 Mar 2024", visible:true},
+      {label:"ETA", value:"████████", visible:false},
+      {label:"Cargo Cutoff", value:"22 Mar 2024 18:00", visible:true},
+      {label:"Equipment", value:"2 × 20GP", visible:true},
+      {label:"Commodity", value:"████████████████", visible:false},
+      {label:"Freight Rate", value:"████████ USD", visible:false},
+    ]
+  }
+];
+
+const DOC_TYPES = ["Commercial Invoice","Bill of Lading","Packing List","Customs Declaration","Purchase Order","Arrival Notice","Booking Confirmation"];
+
+// ─── STATE ───────────────────────────────────────────────────────────────────
+let state = {
+  mode: "daily",
+  doc: null,
+  guessCount: 0,
+  wrongGuesses: [],
+  solved: false,
+  lucaRevealed: false,
+  sheetOpen: false,
+};
+
+function getTodayDoc() {
+  const day = Math.floor(Date.now() / 86400000);
+  return DOCUMENTS[day % DOCUMENTS.length];
+}
+function getRandomDoc() {
+  return DOCUMENTS[Math.floor(Math.random() * DOCUMENTS.length)];
+}
+
+// ─── RENDER ──────────────────────────────────────────────────────────────────
+
+function renderDocCard() {
+  const doc = state.doc;
+  const redactedCount = doc.content.filter(f => !f.visible).length;
+  const dots = [0,1,2].map(i => {
+    const active = i < 3 - Math.min(state.guessCount, 2);
+    return `<div class="rdot" style="background:${active ? '#ef4444' : '#1e293b'}"></div>`;
+  }).join('');
+
+  const rows = doc.content.map(f => `
+    <div class="doc-row">
+      <span class="field-label">${f.label}</span>
+      <span class="field-value ${f.visible ? '' : 'field-redacted'}">${f.value}</span>
+    </div>
+  `).join('');
+
+  document.getElementById('doc-card').innerHTML = `
+    <div class="card-header">
+      <div class="doc-badge">${doc.badge}</div>
+      <div class="doc-meta">
+        <span class="doc-ref">${doc.id}</span>
+        <span class="doc-redacted-count">${redactedCount} fields redacted</span>
+      </div>
+      <div class="redaction-dots">${dots}</div>
+    </div>
+    <div class="doc-grid">${rows}</div>
+    <div class="card-footer">
+      <span class="footer-txt">Global Trade Document · AI-Processed by Luca</span>
+      <span class="footer-txt">• • •</span>
+    </div>
+  `;
+}
+
+function renderHints() {
+  const area = document.getElementById('hint-area');
+  if (state.guessCount === 0) { area.innerHTML = ''; return; }
+  const hints = state.doc.hints.slice(0, state.guessCount);
+  area.innerHTML = hints.map(h => `
+    <div class="hint-item">
+      <span>💡</span>
+      <span class="hint-text">${h}</span>
+    </div>
+  `).join('');
+}
+
+function renderGuessButtons() {
+  const grid = document.getElementById('guess-grid');
+  grid.innerHTML = DOC_TYPES.map(t => {
+    const isWrong = state.wrongGuesses.includes(t);
+    const disabled = state.solved || isWrong;
+    return `<button class="guess-btn ${isWrong ? 'wrong' : ''}" 
+      ${disabled ? 'disabled' : ''} 
+      onclick="handleGuess('${t.replace(/'/g,"\\'")}')">
+      ${isWrong ? '✕ ' : ''}${t}
+    </button>`;
+  }).join('');
+}
+
+function lucaHTML(container) {
+  const doc = state.doc;
+  const revealed = state.lucaRevealed;
+
+  const jsonRows = Object.entries(doc.lucaExtraction).map(([k,v]) => `
+    <div class="json-row">
+      <span class="json-key">${k}</span>
+      <span class="json-colon">: </span>
+      <span class="json-val">${typeof v === 'object' ? JSON.stringify(v) : String(v)}</span>
+    </div>
+  `).join('');
+
+  const inner = revealed ? `
+    <div class="luca-content">
+      <div class="luca-section">
+        <div class="luca-section-label">Document Type</div>
+        <div class="luca-doc-type">${doc.type}</div>
+      </div>
+      <div class="luca-section">
+        <div class="luca-section-label">Extracted Fields</div>
+        <div class="luca-json">${jsonRows}</div>
+      </div>
+      <div class="luca-section">
+        <div class="luca-section-label">Luca's Assessment</div>
+        <div class="luca-note">${doc.lucaNote}</div>
+      </div>
+      <div class="luca-timing">⚡ Luca processes this in ~0.2 seconds.</div>
+    </div>
+  ` : `
+    <div class="luca-idle">
+      <div class="luca-idle-icon">🔍</div>
+      <p class="luca-idle-text">Luca is analysing the document.<br>Make your first guess to see the breakdown.</p>
+      <div class="luca-idle-bar"><div class="luca-idle-fill"></div></div>
+    </div>
+  `;
+
+  container.innerHTML = `
+    <div class="luca-header">
+      <div class="luca-avatar">L</div>
+      <div>
+        <div class="luca-name">Luca</div>
+        <div class="luca-role">AI Freight Agent · Zencargo</div>
+      </div>
+      <div class="luca-status">
+        <div class="luca-pulse"></div>
+        <span class="luca-online">Active</span>
+      </div>
+    </div>
+    <div class="luca-divider"></div>
+    ${inner}
+  `;
+}
+
+function renderLuca() {
+  lucaHTML(document.getElementById('luca-sidebar-content'));
+  lucaHTML(document.getElementById('sheet-scroll'));
+
+  // show/hide ready badge on mobile tab
+  const badge = document.getElementById('luca-tab-badge');
+  badge.style.display = state.lucaRevealed ? 'inline' : 'none';
+}
+
+function renderModeUI() {
+  const chip = document.getElementById('mode-chip');
+  const btn = document.getElementById('mode-btn');
+  chip.textContent = state.mode === 'daily' ? '📅 Daily Challenge' : '🎲 Free Play';
+  btn.textContent = state.mode === 'daily' ? '🎲 Free Play' : '📅 Daily';
+}
+
+function renderAll() {
+  renderModeUI();
+  renderDocCard();
+  renderHints();
+  renderGuessButtons();
+  renderLuca();
+}
+
+// ─── ACTIONS ─────────────────────────────────────────────────────────────────
+
+function handleGuess(type) {
+  if (state.solved || state.wrongGuesses.includes(type)) return;
+  state.guessCount++;
+  if (type === state.doc.type) {
+    state.solved = true;
+    state.lucaRevealed = true;
+    renderAll();
+    showSuccess();
+  } else {
+    state.wrongGuesses.push(type);
+    state.lucaRevealed = true;
+    // auto-open sheet on mobile after first guess
+    if (state.guessCount === 1 && window.innerWidth < 768) {
+      state.sheetOpen = true;
+      document.getElementById('luca-sheet').classList.add('open');
+      document.getElementById('tab-chevron').textContent = '▼';
+    }
+    renderAll();
+  }
+}
+
+function toggleSheet() {
+  state.sheetOpen = !state.sheetOpen;
+  document.getElementById('luca-sheet').classList.toggle('open', state.sheetOpen);
+  document.getElementById('tab-chevron').textContent = state.sheetOpen ? '▼' : '▲';
+}
+
+function showSuccess() {
+  const doc = state.doc;
+  const gc = state.guessCount;
+  const stars = gc === 1 ? 3 : gc === 2 ? 2 : 1;
+  document.getElementById('success-stars').innerHTML = [0,1,2].map(i => `<span style="opacity:${i < stars ? 1 : 0.2}">★</span>`).join('');
+  document.getElementById('success-type').textContent = doc.type;
+  document.getElementById('success-meta').textContent = gc === 1 ? 'First try — impressive.' : `Identified in ${gc} guesses.`;
+  document.getElementById('success-fact').innerHTML = `<strong>Why it matters:</strong> A ${doc.type} is processed by freight agents and customs authorities on every international shipment. Luca extracts ${Object.keys(doc.lucaExtraction).length} fields from this document type automatically.`;
+  document.getElementById('success-overlay').classList.add('open');
+}
+
+function nextDoc() {
+  document.getElementById('success-overlay').classList.remove('open');
+  document.getElementById('luca-sheet').classList.remove('open');
+  state = {
+    mode: 'free',
+    doc: getRandomDoc(),
+    guessCount: 0,
+    wrongGuesses: [],
+    solved: false,
+    lucaRevealed: false,
+    sheetOpen: false,
+  };
+  document.getElementById('tab-chevron').textContent = '▲';
+  renderAll();
+}
+
+document.getElementById('mode-btn').addEventListener('click', () => {
+  state.mode = state.mode === 'daily' ? 'free' : 'daily';
+  state.doc = state.mode === 'daily' ? getTodayDoc() : getRandomDoc();
+  state.guessCount = 0;
+  state.wrongGuesses = [];
+  state.solved = false;
+  state.lucaRevealed = false;
+  state.sheetOpen = false;
+  document.getElementById('luca-sheet').classList.remove('open');
+  document.getElementById('tab-chevron').textContent = '▲';
+  renderAll();
+});
+
+// ─── INIT ────────────────────────────────────────────────────────────────────
+state.doc = getTodayDoc();
+renderAll();
+</script>
+</body>
+</html>
