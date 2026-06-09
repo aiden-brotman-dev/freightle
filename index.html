@@ -253,12 +253,10 @@ const DOCUMENTS = [
       "Includes vessel name, port of loading and discharge",
       "Acts as a title document — whoever holds it owns the goods",
     ],
-    // Black bars over "BILL OF LADING" text top-right area
-    redactions: [
-      { top: 5, left: 35, width: 40, height: 6 },
-    ],
+    redactions: [{ top: 5, left: 35, width: 40, height: 6 }],
     lucaNote: "Original document marked FREIGHT PREPAID. Consignee is to order of Kasikorn Bank — typical for LC-backed shipments.",
     facts: "A Bill of Lading is one of the most important documents in global trade. It serves as a receipt, a contract of carriage, and a title document all at once.",
+    extracted: {"date":"20 Jul, 2018","origin":"HAIPHONG, VIET NAM","carrier":"DACO LOGISTICS","shipper":"VIET HA LOGISTICS TRANSPORTATION COMPANY LIMITED.","consignee":"TO THE ORDER OF KASIKORN BANK PUBLIC CO., LTD BANGKOK","destination":"BANGKOK, THAILAND","total_value":null,"document_clues":"BILL OF LADING, ORIGINAL, SHIPPED ON BOARD, FREIGHT PREPAID, CIF BANGKOK, L/C NO: ML18016065, HS.CODE: 6305.3290, FORWARD COMMITMENTS","reference_number":"HPBKK1807061","goods_description":"01X40'HC CONTAINER S.T.C.: 41 PACKAGES POLYPROPYLENE WOVEN BAG BAFFEL INSIDE CIF BANGKOK, THAILAND L/C NO: ML18016065 HS.CODE: 6305.3290"},
   },
   {
     id: "QROA-3265-21",
@@ -269,12 +267,10 @@ const DOCUMENTS = [
       "Contains RFC codes and aduana references",
       "Used to legally import or export goods into Mexico",
     ],
-    // Black bar over "PEDIMENTO" heading at top center
-    redactions: [
-      { top: 1, left: 25, width: 50, height: 4.5 },
-    ],
+    redactions: [{ top: 1, left: 25, width: 50, height: 4.5 }],
     lucaNote: "Import pedimento filed via HSBC electronic payment. Importer: Aceway de Mexico. Goods: Position sensor (HS 9031.90.99).",
     facts: "A Pedimento is Mexico's official customs declaration form — the equivalent of a SAD form in the EU. Every import and export through Mexican customs requires one.",
+    extracted: {"date":"25/08/2021","origin":"IRVINE, CALIFORNIA, ESTADOS UNIDOS DE AMERICA","carrier":null,"shipper":"SEYI-AMERICA, INC.","consignee":"ACEWAY DE MEXICO S.A. DE C.V.","destination":"QUERETARO, EL MARQUES Y COLON, QUERETARO","total_value":"$4,960","document_clues":"PEDIMENTO (Mexican customs import declaration), T. OPER: IMP (Import), REGIMEN: IMD, CVE. PEDIMENTO: A1, ADUANA E/S: 640, INCOTERM: EXW, PATENTE: 1671, AGENTE ADUANAL","reference_number":"21 64 1671 1003265","goods_description":null},
   },
   {
     id: "AUTOFY2022-26",
@@ -285,12 +281,10 @@ const DOCUMENTS = [
       "Contains line items for ocean freight, storage, and handling",
       "Has a total amount due and bank payment details",
     ],
-    // Black bar over "INVOICE" title at top center
-    redactions: [
-      { top: 2, left: 30, width: 40, height: 6 },
-    ],
+    redactions: [{ top: 2, left: 30, width: 40, height: 6 }],
     lucaNote: "Japan Car Logistics issued this to Autofy Japan. 3 RORO units shipped via Hoegh Tracer. Storage fees charged for 55–77 days over free time.",
     facts: "A Freight Invoice is how carriers and freight forwarders bill their clients. It itemises every charge — ocean freight, fuel surcharges, handling fees, and storage.",
+    extracted: {"date":"2022/10/26","origin":"KOBE","carrier":"HOEGH","shipper":"JAPAN CAR LOGISTICS CO. LIMITED","consignee":"AUTOFY JAPAN CO., LTD","destination":"BRIGETOWN, GEORGETOWN","total_value":"1,319,430","document_clues":"INVOICE, RORO loading mode, PREPAID freight type, BL numbers, booking number, ocean freight, storage fee, amendment fee, bank information for payment","reference_number":"AUTOFY2022-26","goods_description":"OCEAN FREIGHT (vehicles - RORO)"},
   },
   {
     id: "1939387",
@@ -301,12 +295,10 @@ const DOCUMENTS = [
       "Contains pickup and delivery addresses with times",
       "Includes rate, mileage, and fuel surcharge breakdown",
     ],
-    // Black bar over "LOAD CONFIRMATION" top right
-    redactions: [
-      { top: 3, left: 45, width: 50, height: 7 },
-    ],
+    redactions: [{ top: 3, left: 45, width: 50, height: 7 }],
     lucaNote: "King Solutions brokered load #1939387. Schaefer Systems to Boot Barn, 961 miles. Rate $1,409.89 + $490.11 fuel surcharge = $1,900 total.",
     facts: "A Load Confirmation (or Rate Confirmation) is a binding contract between a freight broker and a carrier. It confirms the load details, rate, and legal obligations before the truck moves.",
+    extracted: {"date":"07/24/2023","origin":"Charlotte, NC 28273","carrier":"Stig, LLC","shipper":"SCHAEFER SYSTEMS","consignee":"Boot Barn","destination":"Kansas City, MO 64153","total_value":"$1,900.00","document_clues":"LOAD CONFIRMATION - This is a load confirmation document for freight shipping, containing shipper/consignee details, pickup/delivery appointments, rate confirmation, fuel surcharge, and driver instructions.","reference_number":"1939387","goods_description":"Totes or tote bins"},
   },
   {
     id: "SI-19378",
@@ -317,12 +309,10 @@ const DOCUMENTS = [
       "No monetary values — purely describes the physical shipment",
       "Accompanies cargo through customs and at the destination",
     ],
-    // Black bar over "PACKING LIST" top left
-    redactions: [
-      { top: 8, left: 0, width: 25, height: 4 },
-    ],
+    redactions: [{ top: 8, left: 0, width: 25, height: 4 }],
     lucaNote: "Camfil Malaysia shipped 705 air filter units to Philippines. 25 cartons + 16 pallets. Total 51.15 CBM, 2,917 KGS gross weight.",
     facts: "A Packing List tells everyone handling the cargo exactly what's inside each box — article numbers, quantities, weights, and dimensions. It has no financial value but is essential for customs and delivery.",
+    extracted: {"date":"22 Jul 2015","origin":"PORT KLANG, MALAYSIA","carrier":"SIMA GENESIS V.009E","shipper":"CAMFIL MALAYSIA SDN. BHD.","consignee":"Air Filters Philippines Inc.","destination":"MANILA","total_value":null,"document_clues":"PACKING LIST, OC Number, SI Number, Mode of Transport, Port of Shipment, Port of Discharge, Container No, Seal No, ETD, ETA, Total Packing: 25 CARTON + 16 PALLET + 0 DRUM + 0 CRATE + 0 ROLL","reference_number":"SI Number : 19378","goods_description":"Industrial Air Filters - Aeropac 3CPM, Airopac GI, Opakfil-G 3OPGHF, CityPleat-200, Aeropleat III"},
   },
   {
     id: "HAWB-2024176",
@@ -333,13 +323,13 @@ const DOCUMENTS = [
       "Contains IATA agent codes and airline flight details",
       "Non-negotiable — unlike a Bill of Lading, it does not transfer ownership",
     ],
-    // Black bar over "Air Waybill" text on right side
     redactions: [
       { top: 55, left: 60, width: 35, height: 6 },
       { top: 1, left: 40, width: 35, height: 5 },
     ],
     lucaNote: "Turkish Airlines flight TK0179. 30 pieces of women's jackets, 354kg, Istanbul to LAX. Freight collect.",
     facts: "An Air Waybill (AWB) is the air equivalent of a Bill of Lading, but it's non-negotiable — it doesn't transfer title to goods. It's a contract between shipper and airline.",
+    extracted: {"date":"09.07.2024","origin":"ISTANBUL AIRPORT","carrier":"TURKISH AIRLINES","shipper":"GLOBAL SOURCING DIS.TIC.AS.","consignee":"LOS ANGELES COLLECTIVE LLC","destination":"LOS ANGELES AIRPORT","total_value":"AS AGREED","document_clues":"Air Waybill (HAWB - House Air Waybill), FREIGHT COLLECT, Not Negotiable, ORIGINAL 2 (FOR CONSIGNEE), IST 5864 9566, Currency USD, NVD (No Value Declared), NVC (No Value for Customs)","reference_number":"HAWB 2024176","goods_description":"WOMEN'S JACKETS, 30 PIECES, 354.00 KG"},
   },
 ];
 
@@ -421,49 +411,12 @@ async function renderPDF(doc) {
 }
 
 // ── EXTEND API ────────────────────────────────────────────────────────────────
-async function callExtend(filename) {
-  state.lucaStatus = 'loading';
+async function callExtend(doc) {
+  // Use pre-extracted data instantly — no API call needed
+  state.lucaData = doc.extracted;
+  state.lucaStatus = 'done';
   renderLuca();
-
-  try {
-    // Step 1: Start the extraction run
-    const startRes = await fetch('/.netlify/functions/extract', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ filename }),
-    });
-    if (!startRes.ok) throw new Error('Start error: ' + startRes.status);
-    const { runId } = await startRes.json();
-    if (!runId) throw new Error('No runId returned');
-
-    // Step 2: Poll from the browser every 3 seconds
-    for (let i = 0; i < 30; i++) {
-      await new Promise(r => setTimeout(r, 3000));
-      const pollRes = await fetch('/.netlify/functions/extract', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ runId }),
-      });
-      if (!pollRes.ok) throw new Error('Poll error: ' + pollRes.status);
-      const pollData = await pollRes.json();
-
-      if (pollData.status === 'COMPLETED' && pollData.output) {
-        state.lucaData = pollData.output;
-        state.lucaStatus = 'done';
-        renderLuca();
-        // Show success if game already solved
-        if (state.solved) showSuccess();
-        return;
-      }
-      if (pollData.status === 'FAILED') throw new Error('Extraction failed');
-    }
-    throw new Error('Timed out after 90 seconds');
-
-  } catch (err) {
-    console.error('Extend error:', err);
-    state.lucaStatus = 'error';
-    renderLuca();
-  }
+  if (state.solved) showSuccess();
 }
 
 // ── RENDER ────────────────────────────────────────────────────────────────────
@@ -591,7 +544,7 @@ function handleGuess(type) {
 
   // Trigger Extend extraction on first guess
   if (state.guessCount === 1) {
-    callExtend(state.doc.filename);
+    callExtend(state.doc);
     if (window.innerWidth < 768) {
       state.sheetOpen = true;
       document.getElementById('luca-sheet').classList.add('open');
