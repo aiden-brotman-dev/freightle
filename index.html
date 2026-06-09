@@ -57,10 +57,12 @@ html,body{min-height:100%;background:#080d14;color:#e2e8f0;font-family:'DM Sans'
 /* Black redaction bars — positioned over doc type text */
 .redact-bar{
   position:absolute;
-  background:#000;
+  background: rgba(0,0,0,0.08);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
   pointer-events:none;
   z-index:10;
-}
+  border-radius: 3px;
 #pdf-loading{
   display:flex;
   flex-direction:column;
@@ -476,7 +478,6 @@ function lucaInnerHTML() {
     { key: 'date', label: 'Date' },
     { key: 'goods_description', label: 'Goods' },
     { key: 'total_value', label: 'Total Value' },
-    { key: 'document_clues', label: 'Key Clues' },
   ];
 
   const fieldsHTML = fields.map(f => {
