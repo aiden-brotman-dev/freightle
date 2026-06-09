@@ -609,16 +609,14 @@ function nextDoc() {
   document.getElementById('success-overlay').classList.remove('open');
   document.getElementById('luca-sheet').classList.remove('open');
 
-  // Add current doc type to seen
-  const completedTypes = [...state.seenTypes, state.doc.type];
+  // Mark current doc type as used
+  if (!usedTypes.includes(state.doc.type)) usedTypes.push(state.doc.type);
 
-  // If all 6 done, start fresh (but still exclude the one we just did)
-  const newSeenTypes = completedTypes.length >= DOC_TYPES.length
-    ? [state.doc.type]  // reset but exclude last shown
-    : completedTypes;
+  // Pick next doc (getNextDoc resets usedTypes if all 6 done)
+  const newDoc = getNextDoc();
 
-  // Pick next doc excluding all seen types
-  const newDoc = getRandomDoc(newSeenTypes);
+  // Mark new doc as used immediately so it can't be picked again this cycle
+  if (!usedTypes.includes(newDoc.type)) usedTypes.push(newDoc.type);
 
   state = {
     mode: 'free',
@@ -629,8 +627,6 @@ function nextDoc() {
     lucaData: null,
     lucaStatus: 'idle',
     sheetOpen: false,
-    seenIds: [...state.seenIds, state.doc.id, newDoc.id],
-    seenTypes: [...newSeenTypes, newDoc.type],
   };
 
   document.getElementById('tab-chevron').textContent = '▲';
@@ -640,8 +636,10 @@ function nextDoc() {
 
 document.getElementById('mode-btn').addEventListener('click', () => {
   state.mode = state.mode === 'daily' ? 'free' : 'daily';
-  const newDoc = state.mode === 'daily' ? getTodayDoc() : getRandomDoc([]);
-  state = { mode: state.mode, doc: newDoc, guessCount: 0, wrongGuesses: [], solved: false, lucaData: null, lucaStatus: 'idle', sheetOpen: false, seenIds: [newDoc.id], seenTypes: [newDoc.type] };
+  usedTypes.length = 0; // reset on mode switch
+  const newDoc = state.mode === 'daily' ? getTodayDoc() : getNextDoc();
+  if (!usedTypes.includes(newDoc.type)) usedTypes.push(newDoc.type);
+  state = { mode: state.mode, doc: newDoc, guessCount: 0, wrongGuesses: [], solved: false, lucaData: null, lucaStatus: 'idle', sheetOpen: false };
   document.getElementById('luca-sheet').classList.remove('open');
   document.getElementById('tab-chevron').textContent = '▲';
   renderAll();
@@ -650,8 +648,7 @@ document.getElementById('mode-btn').addEventListener('click', () => {
 
 // ── INIT ──────────────────────────────────────────────────────────────────────
 state.doc = getTodayDoc();
-state.seenIds = [state.doc.id];
-state.seenTypes = [state.doc.type];
+usedTypes.push(state.doc.type);
 renderAll();
 renderPDF(state.doc);
 </script>
