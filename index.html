@@ -247,7 +247,7 @@ const DOCUMENTS = [
   {
     id: "HPBKK1807061",
     type: "Bill of Lading",
-    filename: "508871216-BILL-0011 (1).pdf",
+    filename: "508871216-bill-0011 (1).pdf",
     hints: [
       "Issued by a shipping carrier or logistics company",
       "Includes vessel name, port of loading and discharge",
@@ -263,7 +263,7 @@ const DOCUMENTS = [
   {
     id: "QROA-3265-21",
     type: "Pedimento",
-    filename: "584717571-PEDIMENTO (1).pdf",
+    filename: "584717571-pedimento (1).pdf",
     hints: [
       "Filed with a Mexican government customs authority",
       "Contains RFC codes and aduana references",
@@ -279,7 +279,7 @@ const DOCUMENTS = [
   {
     id: "AUTOFY2022-26",
     type: "Freight Invoice",
-    filename: "696640005-Freight-Payment-NVs (1).pdf",
+    filename: "696640005-freight-payment-nvs (1).pdf",
     hints: [
       "Issued by a logistics or freight company to their client",
       "Contains line items for ocean freight, storage, and handling",
@@ -295,7 +295,7 @@ const DOCUMENTS = [
   {
     id: "1939387",
     type: "Load Confirmation",
-    filename: "Load Confirmation (dragged).pdf",
+    filename: "load confirmation (dragged).pdf",
     hints: [
       "Issued by a freight broker to a trucking carrier",
       "Contains pickup and delivery addresses with times",
@@ -327,7 +327,7 @@ const DOCUMENTS = [
   {
     id: "HAWB-2024176",
     type: "Air Waybill",
-    filename: "Waybill.pdf",
+    filename: "waybill.pdf",
     hints: [
       "Issued for air cargo shipments",
       "Contains IATA agent codes and airline flight details",
@@ -426,21 +426,44 @@ async function callExtend(filename) {
   renderLuca();
 
   try {
-    const res = await fetch('/.netlify/functions/extract', {
+    // Step 1: Start the extraction run
+    const startRes = await fetch('/.netlify/functions/extract', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ filename }),
     });
+    if (!startRes.ok) throw new Error('Start error: ' + startRes.status);
+    const { runId } = await startRes.json();
+    if (!runId) throw new Error('No runId returned');
 
-    if (!res.ok) throw new Error('Function error: ' + res.status);
-    const data = await res.json();
-    state.lucaData = data;
-    state.lucaStatus = 'done';
+    // Step 2: Poll from the browser every 3 seconds
+    for (let i = 0; i < 30; i++) {
+      await new Promise(r => setTimeout(r, 3000));
+      const pollRes = await fetch('/.netlify/functions/extract', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ runId }),
+      });
+      if (!pollRes.ok) throw new Error('Poll error: ' + pollRes.status);
+      const pollData = await pollRes.json();
+
+      if (pollData.status === 'COMPLETED' && pollData.output) {
+        state.lucaData = pollData.output;
+        state.lucaStatus = 'done';
+        renderLuca();
+        // Show success if game already solved
+        if (state.solved) showSuccess();
+        return;
+      }
+      if (pollData.status === 'FAILED') throw new Error('Extraction failed');
+    }
+    throw new Error('Timed out after 90 seconds');
+
   } catch (err) {
     console.error('Extend error:', err);
     state.lucaStatus = 'error';
+    renderLuca();
   }
-  renderLuca();
 }
 
 // ── RENDER ────────────────────────────────────────────────────────────────────
