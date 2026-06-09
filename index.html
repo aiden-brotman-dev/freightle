@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Freightle — Can you identify the document?</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html,body{min-height:100%;background:#080d14;color:#e2e8f0;font-family:'DM Sans',sans-serif;-webkit-font-smoothing:antialiased;}
+
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.3}}
+@keyframes slideIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes sheetUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+@keyframes barPulse{0%,100%{opacity:0.4}50%{opacity:1}}
+
+::-webkit-scrollbar{width:4px;}
+::-webkit-scrollbar-thumb{background:#1e293b;border-radius:2px;}
+
+#topbar{background:#0a1020;border-bottom:1px solid #1e293b;padding:0 16px;position:sticky;top:0;z-index:100;}
+#topbar-inner{max-width:1200px;margin:0 auto;height:52px;display:flex;align-items:center;justify-content:space-between;}
+.logo{display:flex;align-items:center;gap:8px;}
+.logo-mark{font-size:18px;color:#3b82f6;}
+.logo-text{font-family:'Space Mono',monospace;font-weight:700;font-size:15px;letter-spacing:0.15em;color:#f1f5f9;}
+.logo-badge{background:#1e3a5f;color:#60a5fa;font-size:9px;font-weight:600;letter-spacing:0.1em;padding:2px 5px;border-radius:4px;}
+#topbar-right{display:flex;align-items:center;gap:10px;}
+#mode-btn{background:transparent;border:1px solid #1e293b;color:#94a3b8;padding:5px 12px;border-radius:6px;font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif;}
+#mode-btn:hover{border-color:#3b82f6;color:#e2e8f0;}
+
+#main{max-width:1200px;margin:0 auto;width:100%;padding:28px 24px;display:flex;gap:24px;align-items:flex-start;}
+#game-area{flex:1;min-width:0;display:flex;flex-direction:column;gap:18px;}
+
+.prompt-chip{display:inline-flex;align-self:flex-start;background:#0f1f35;border:1px solid #1e3a5f;color:#60a5fa;font-size:11px;font-weight:500;padding:4px 12px;border-radius:20px;letter-spacing:0.03em;}
+#prompt-title{font-size:18px;font-weight:600;color:#f1f5f9;line-height:1.3;margin:6px 0 4px;}
+#prompt-sub{font-size:13px;color:#475569;}
+
+/* PDF VIEWER */
+#pdf-wrap{
+  position:relative;
+  background:#1a1a1a;
+  border:1px solid #1e293b;
+  border-radius:12px;
+  overflow:hidden;
+  min-height:500px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+#pdf-canvas{
+  display:block;
+  width:100%;
+  height:auto;
+  border-radius:12px;
+}
+/* Black redaction bars — positioned over doc type text */
+.redact-bar{
+  position:absolute;
+  background: rgba(0,0,0,0.08);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  pointer-events:none;
+  z-index:10;
+  border-radius: 3px;
+}
+#pdf-loading{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:12px;
+  color:#475569;
+  font-size:13px;
+  padding:60px;
+}
+.spinner{
+  width:28px;height:28px;
+  border:2px solid #1e293b;
+  border-top-color:#3b82f6;
+  border-radius:50%;
+  animation:spin 0.8s linear infinite;
+}
+#pdf-error{display:none;flex-direction:column;align-items:center;gap:8px;color:#ef4444;font-size:13px;padding:40px;}
+
+/* HINTS */
+#hint-area{display:flex;flex-direction:column;gap:8px;}
+.hint-item{display:flex;align-items:flex-start;gap:8px;background:#0f1a2e;border:1px solid #1e3a5f;border-radius:8px;padding:9px 12px;animation:slideIn 0.25s ease;}
+.hint-text{color:#93c5fd;line-height:1.4;font-size:13px;}
+
+/* GUESS BUTTONS */
+#guess-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px;}
+.guess-btn{background:#0d1627;border:1px solid #1e293b;color:#94a3b8;padding:12px 14px;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;text-align:left;font-family:'DM Sans',sans-serif;transition:all 0.15s;line-height:1.3;}
+.guess-btn:hover:not(:disabled):not(.wrong){border-color:#3b82f6;color:#e2e8f0;background:#0f1f35;}
+.guess-btn.wrong{background:#1a0a0a;border-color:#3f1010;color:#6b1f1f;cursor:not-allowed;}
+.guess-btn.correct{background:#0a1f0f;border-color:#166534;color:#4ade80;cursor:not-allowed;}
+.guess-btn.used{opacity:0.25;cursor:not-allowed;}
+.guess-btn:disabled{cursor:not-allowed;opacity:0.5;}
+
+/* LUCA SIDEBAR */
+#luca-sidebar{width:300px;flex-shrink:0;background:#0a1020;border:1px solid #1e293b;border-radius:12px;position:sticky;top:68px;max-height:calc(100vh - 88px);overflow-y:auto;}
+.luca-header{display:flex;align-items:center;gap:12px;padding:14px 16px;}
+.luca-avatar{width:34px;height:34px;background:linear-gradient(135deg,#1d4ed8,#3b82f6);border-radius:9px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px;color:#fff;flex-shrink:0;}
+.luca-name{font-size:14px;font-weight:600;color:#f1f5f9;}
+.luca-role{font-size:10px;color:#475569;}
+.luca-status{margin-left:auto;display:flex;align-items:center;gap:5px;}
+.luca-pulse{width:7px;height:7px;background:#22c55e;border-radius:50%;animation:pulse 2s infinite;}
+.luca-online{font-size:10px;color:#22c55e;}
+.luca-divider{border-bottom:1px solid #1e293b;margin:0 16px;}
+
+.luca-idle{padding:28px 16px;text-align:center;}
+.luca-idle-icon{font-size:28px;opacity:0.4;margin-bottom:14px;}
+.luca-idle-text{font-size:13px;color:#475569;line-height:1.6;}
+
+.luca-processing{padding:20px 16px;display:flex;flex-direction:column;gap:12px;}
+.luca-processing-label{font-size:9px;font-weight:600;letter-spacing:0.1em;color:#334155;text-transform:uppercase;}
+.luca-processing-steps{display:flex;flex-direction:column;gap:8px;}
+.luca-step{display:flex;align-items:center;gap:8px;font-size:12px;color:#475569;}
+.luca-step.active{color:#60a5fa;}
+.luca-step.done{color:#22c55e;}
+.luca-step-dot{width:6px;height:6px;border-radius:50%;background:currentColor;flex-shrink:0;}
+.luca-step-spinner{width:10px;height:10px;border:1.5px solid #1e3a5f;border-top-color:#3b82f6;border-radius:50%;animation:spin 0.8s linear infinite;flex-shrink:0;}
+
+.luca-content{padding:16px;display:flex;flex-direction:column;gap:18px;}
+.luca-section{display:flex;flex-direction:column;gap:7px;}
+.luca-section-label{font-size:9px;font-weight:600;letter-spacing:0.1em;color:#334155;text-transform:uppercase;}
+.luca-doc-type{font-size:15px;font-weight:600;color:#60a5fa;font-family:'Space Mono',monospace;}
+.luca-fields{background:#080d14;border:1px solid #1e293b;border-radius:8px;padding:10px;display:flex;flex-direction:column;gap:6px;animation:slideIn 0.3s ease;}
+.luca-field-row{display:flex;flex-direction:column;gap:2px;padding-bottom:6px;border-bottom:1px solid #111827;}
+.luca-field-row:last-child{border-bottom:none;padding-bottom:0;}
+.luca-field-key{font-family:'Space Mono',monospace;font-size:9px;color:#60a5fa;}
+.luca-field-val{font-size:11px;color:#a7f3d0;word-break:break-word;line-height:1.4;}
+.luca-field-val.empty{color:#334155;font-style:italic;}
+.luca-note{font-size:12px;color:#94a3b8;line-height:1.6;background:#080d14;border:1px solid #1e3a5f;border-radius:8px;padding:10px 12px;}
+.luca-timing{font-size:10px;color:#334155;padding-top:8px;border-top:1px solid #111827;}
+.luca-error{font-size:12px;color:#ef4444;padding:16px;line-height:1.5;}
+
+/* MOBILE TAB */
+#luca-tab{display:none;position:fixed;bottom:0;left:0;right:0;z-index:90;background:#0a1020;border-top:1px solid #1e3a5f;padding:0 20px;height:60px;align-items:center;justify-content:space-between;cursor:pointer;border-left:none;border-right:none;border-bottom:none;font-family:'DM Sans',sans-serif;}
+.luca-tab-left{display:flex;align-items:center;gap:10px;}
+.luca-tab-avatar{width:32px;height:32px;background:linear-gradient(135deg,#1d4ed8,#3b82f6);border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;color:#fff;}
+.luca-tab-label{font-size:14px;font-weight:600;color:#e2e8f0;}
+.luca-tab-badge{background:#0f3020;border:1px solid #166534;color:#4ade80;font-size:10px;font-weight:600;padding:2px 7px;border-radius:10px;display:none;}
+.luca-tab-chevron{font-size:12px;color:#475569;}
+
+#luca-sheet{display:none;position:fixed;bottom:60px;left:0;right:0;z-index:89;background:#0a1020;border:1px solid #1e293b;border-radius:16px 16px 0 0;max-height:70vh;flex-direction:column;box-shadow:0 -8px 40px rgba(0,0,0,0.6);animation:sheetUp 0.25s ease;}
+#luca-sheet.open{display:flex;}
+.sheet-handle{width:36px;height:4px;background:#1e293b;border-radius:2px;margin:12px auto 0;flex-shrink:0;}
+#sheet-scroll{overflow-y:auto;flex:1;padding-bottom:16px;}
+
+/* SUCCESS */
+#success-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);backdrop-filter:blur(4px);align-items:center;justify-content:center;z-index:200;padding:20px;animation:fadeIn 0.2s ease;}
+#success-overlay.open{display:flex;}
+.success-card{background:#0d1627;border:1px solid #1e3a5f;border-radius:16px;padding:28px 24px;max-width:440px;width:100%;text-align:center;display:flex;flex-direction:column;align-items:center;gap:10px;animation:slideIn 0.3s ease;}
+.success-stars{display:flex;gap:6px;color:#f59e0b;font-size:26px;}
+.success-title{font-size:11px;color:#475569;letter-spacing:0.1em;text-transform:uppercase;}
+.success-type{font-size:22px;font-weight:700;color:#60a5fa;font-family:'Space Mono',monospace;}
+.success-meta{font-size:13px;color:#94a3b8;}
+.success-divider{width:36px;height:1px;background:#1e293b;margin:4px 0;}
+.success-fact{font-size:12px;color:#64748b;line-height:1.6;text-align:left;background:#080d14;padding:12px;border-radius:8px;border:1px solid #1e293b;width:100%;}
+#next-btn{margin-top:6px;width:100%;background:linear-gradient(135deg,#1d4ed8,#3b82f6);color:#fff;border:none;padding:12px 24px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;}
+#next-btn:hover{filter:brightness(1.1);}
+
+@media(max-width:767px){
+  #main{padding:14px 12px 0;flex-direction:column;}
+  #luca-sidebar{display:none;}
+  #luca-tab{display:flex;}
+  #game-area{padding-bottom:72px;}
+  #prompt-title{font-size:16px;}
+}
+</style>
+</head>
+<body>
+
+<header id="topbar">
+  <div id="topbar-inner">
+    <div class="logo">
+      <span class="logo-mark">⬡</span>
+      <span class="logo-text">FREIGHTLE</span>
+      <span class="logo-badge">BETA</span>
+    </div>
+    <div id="topbar-right">
+      <button id="mode-btn">🎲 Free Play</button>
+      <span style="font-family:'Space Mono',monospace;font-size:10px;color:#334155;">SHP-2024-0441</span>
+    </div>
+  </div>
+</header>
+
+<div id="main">
+  <div id="game-area">
+    <div>
+      <span class="prompt-chip" id="mode-chip">📅 Daily Challenge</span>
+      <h2 id="prompt-title">What type of logistics document is this?</h2>
+      <p id="prompt-sub">Study the document carefully. The document type has been redacted.</p>
+    </div>
+
+    <!-- PDF VIEWER -->
+    <div id="pdf-wrap">
+      <div id="pdf-loading">
+        <div class="spinner"></div>
+        <span>Loading document...</span>
+      </div>
+      <div id="pdf-error">
+        <span>⚠️ Could not load document</span>
+      </div>
+      <canvas id="pdf-canvas" style="display:none;"></canvas>
+      <!-- Redaction bars injected here by JS -->
+    </div>
+
+    <div id="hint-area"></div>
+    <div id="guess-grid"></div>
+  </div>
+
+  <aside id="luca-sidebar">
+    <div id="luca-sidebar-content"></div>
+  </aside>
+</div>
+
+<button id="luca-tab" onclick="toggleSheet()">
+  <div class="luca-tab-left">
+    <div class="luca-tab-avatar">L</div>
+    <span class="luca-tab-label">Luca's Breakdown</span>
+    <span class="luca-tab-badge" id="luca-tab-badge">Ready</span>
+  </div>
+  <span class="luca-tab-chevron" id="tab-chevron">▲</span>
+</button>
+
+<div id="luca-sheet">
+  <div class="sheet-handle"></div>
+  <div id="sheet-scroll"></div>
+</div>
+
+<div id="success-overlay">
+  <div class="success-card">
+    <div class="success-stars" id="success-stars"></div>
+    <div class="success-title">Correctly Identified</div>
+    <div class="success-type" id="success-type"></div>
+    <div class="success-meta" id="success-meta"></div>
+    <div class="success-divider"></div>
+    <div class="success-fact" id="success-fact"></div>
+    <button id="next-btn" onclick="nextDoc()">Next Document →</button>
+  </div>
+</div>
+
+<!-- PDF.js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script>
+pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+// ── DOCUMENTS ────────────────────────────────────────────────────────────────
+// redactions: array of {top, left, width, height} as % of rendered canvas
+const DOCUMENTS = [
+  {
+    id: "HPBKK1807061",
+    type: "Bill of Lading",
+    filename: "508871216-bill-0011 (1).pdf",
+    hints: [
+      "Issued by a shipping carrier or logistics company",
+      "Includes vessel name, port of loading and discharge",
+      "Acts as a title document — whoever holds it owns the goods",
+    ],
+    redactions: [{ top: 8.5, left: 50, width: 38, height: 2 }],  // "BILL OF LADING" small red text
+    lucaNote: "Original document marked FREIGHT PREPAID. Consignee is to order of Kasikorn Bank — typical for LC-backed shipments.",
+    facts: "A Bill of Lading is one of the most important documents in global trade. It serves as a receipt, a contract of carriage, and a title document all at once.",
+    extracted: {"date":"20 Jul, 2018","origin":"HAIPHONG, VIET NAM","carrier":"DACO LOGISTICS","shipper":"VIET HA LOGISTICS TRANSPORTATION COMPANY LIMITED.","consignee":"TO THE ORDER OF KASIKORN BANK PUBLIC CO., LTD BANGKOK","destination":"BANGKOK, THAILAND","total_value":null,"document_clues":"BILL OF LADING, ORIGINAL, SHIPPED ON BOARD, FREIGHT PREPAID, CIF BANGKOK, L/C NO: ML18016065, HS.CODE: 6305.3290, FORWARD COMMITMENTS","reference_number":"HPBKK1807061","goods_description":"01X40'HC CONTAINER S.T.C.: 41 PACKAGES POLYPROPYLENE WOVEN BAG BAFFEL INSIDE CIF BANGKOK, THAILAND L/C NO: ML18016065 HS.CODE: 6305.3290"},
+  },
+  {
+    id: "QROA-3265-21",
+    type: "Pedimento",
+    filename: "584717571-pedimento (1).pdf",
+    hints: [
+      "Filed with a Mexican government customs authority",
+      "Contains RFC codes and aduana references",
+      "Used to legally import or export goods into Mexico",
+    ],
+    redactions: [{ top: 1.5, left: 33, width: 32, height: 1.8 }],  // "PEDIMENTO" thin strip
+    lucaNote: "Import pedimento filed via HSBC electronic payment. Importer: Aceway de Mexico. Goods: Position sensor (HS 9031.90.99).",
+    facts: "A Pedimento is Mexico's official customs declaration form — the equivalent of a SAD form in the EU. Every import and export through Mexican customs requires one.",
+    extracted: {"date":"25/08/2021","origin":"IRVINE, CALIFORNIA, ESTADOS UNIDOS DE AMERICA","carrier":null,"shipper":"SEYI-AMERICA, INC.","consignee":"ACEWAY DE MEXICO S.A. DE C.V.","destination":"QUERETARO, EL MARQUES Y COLON, QUERETARO","total_value":"$4,960","document_clues":"PEDIMENTO (Mexican customs import declaration), T. OPER: IMP (Import), REGIMEN: IMD, CVE. PEDIMENTO: A1, ADUANA E/S: 640, INCOTERM: EXW, PATENTE: 1671, AGENTE ADUANAL","reference_number":"21 64 1671 1003265","goods_description":null},
+  },
+  {
+    id: "AUTOFY2022-26",
+    type: "Freight Invoice",
+    filename: "696640005-freight-payment-nvs (1).pdf",
+    hints: [
+      "Issued by a logistics or freight company to their client",
+      "Contains line items for ocean freight, storage, and handling",
+      "Has a total amount due and bank payment details",
+    ],
+    redactions: [{ top: 4, left: 40, width: 18, height: 4 }],  // "INVOICE" top center
+    lucaNote: "Japan Car Logistics issued this to Autofy Japan. 3 RORO units shipped via Hoegh Tracer. Storage fees charged for 55–77 days over free time.",
+    facts: "A Freight Invoice is how carriers and freight forwarders bill their clients. It itemises every charge — ocean freight, fuel surcharges, handling fees, and storage.",
+    extracted: {"date":"2022/10/26","origin":"KOBE","carrier":"HOEGH","shipper":"JAPAN CAR LOGISTICS CO. LIMITED","consignee":"AUTOFY JAPAN CO., LTD","destination":"BRIGETOWN, GEORGETOWN","total_value":"1,319,430","document_clues":"INVOICE, RORO loading mode, PREPAID freight type, BL numbers, booking number, ocean freight, storage fee, amendment fee, bank information for payment","reference_number":"AUTOFY2022-26","goods_description":"OCEAN FREIGHT (vehicles - RORO)"},
+  },
+  {
+    id: "1939387",
+    type: "Load Confirmation",
+    filename: "load confirmation (dragged).pdf",
+    hints: [
+      "Issued by a freight broker to a trucking carrier",
+      "Contains pickup and delivery addresses with times",
+      "Includes rate, mileage, and fuel surcharge breakdown",
+    ],
+    redactions: [{ top: 2, left: 62, width: 35, height: 5.5 }],  // "LOAD CONFIRMATION" + Page 1 of 1
+    lucaNote: "King Solutions brokered load #1939387. Schaefer Systems to Boot Barn, 961 miles. Rate $1,409.89 + $490.11 fuel surcharge = $1,900 total.",
+    facts: "A Load Confirmation (or Rate Confirmation) is a binding contract between a freight broker and a carrier. It confirms the load details, rate, and legal obligations before the truck moves.",
+    extracted: {"date":"07/24/2023","origin":"Charlotte, NC 28273","carrier":"Stig, LLC","shipper":"SCHAEFER SYSTEMS","consignee":"Boot Barn","destination":"Kansas City, MO 64153","total_value":"$1,900.00","document_clues":"LOAD CONFIRMATION - This is a load confirmation document for freight shipping, containing shipper/consignee details, pickup/delivery appointments, rate confirmation, fuel surcharge, and driver instructions.","reference_number":"1939387","goods_description":"Totes or tote bins"},
+  },
+  {
+    id: "SI-19378",
+    type: "Packing List",
+    filename: "1695332275975-packing list.pdf",
+    hints: [
+      "Lists individual items, quantities, and physical dimensions",
+      "No monetary values — purely describes the physical shipment",
+      "Accompanies cargo through customs and at the destination",
+    ],
+    redactions: [{ top: 19, left: 0, width: 14, height: 1.8 }],  // "PACKING LIST" underlined text left
+    lucaNote: "Camfil Malaysia shipped 705 air filter units to Philippines. 25 cartons + 16 pallets. Total 51.15 CBM, 2,917 KGS gross weight.",
+    facts: "A Packing List tells everyone handling the cargo exactly what's inside each box — article numbers, quantities, weights, and dimensions. It has no financial value but is essential for customs and delivery.",
+    extracted: {"date":"22 Jul 2015","origin":"PORT KLANG, MALAYSIA","carrier":"SIMA GENESIS V.009E","shipper":"CAMFIL MALAYSIA SDN. BHD.","consignee":"Air Filters Philippines Inc.","destination":"MANILA","total_value":null,"document_clues":"PACKING LIST, OC Number, SI Number, Mode of Transport, Port of Shipment, Port of Discharge, Container No, Seal No, ETD, ETA, Total Packing: 25 CARTON + 16 PALLET + 0 DRUM + 0 CRATE + 0 ROLL","reference_number":"SI Number : 19378","goods_description":"Industrial Air Filters - Aeropac 3CPM, Airopac GI, Opakfil-G 3OPGHF, CityPleat-200, Aeropleat III"},
+  },
+  {
+    id: "HAWB-2024176",
+    type: "Air Waybill",
+    filename: "waybill.pdf",
+    hints: [
+      "Issued for air cargo shipments",
+      "Contains IATA agent codes and airline flight details",
+      "Non-negotiable — unlike a Bill of Lading, it does not transfer ownership",
+    ],
+    redactions: [
+      { top: 0.3, left: 38, width: 26, height: 2.2 },  // top center "Air Waybill" header
+      { top: 9.5, left: 38, width: 10, height: 2 },     // "Air Waybill" mid-left label
+    ],
+    lucaNote: "Turkish Airlines flight TK0179. 30 pieces of women's jackets, 354kg, Istanbul to LAX. Freight collect.",
+    facts: "An Air Waybill (AWB) is the air equivalent of a Bill of Lading, but it's non-negotiable — it doesn't transfer title to goods. It's a contract between shipper and airline.",
+    extracted: {"date":"09.07.2024","origin":"ISTANBUL AIRPORT","carrier":"TURKISH AIRLINES","shipper":"GLOBAL SOURCING DIS.TIC.AS.","consignee":"LOS ANGELES COLLECTIVE LLC","destination":"LOS ANGELES AIRPORT","total_value":"AS AGREED","document_clues":"Air Waybill (HAWB - House Air Waybill), FREIGHT COLLECT, Not Negotiable, ORIGINAL 2 (FOR CONSIGNEE), IST 5864 9566, Currency USD, NVD (No Value Declared), NVC (No Value for Customs)","reference_number":"HAWB 2024176","goods_description":"WOMEN'S JACKETS, 30 PIECES, 354.00 KG"},
+  },
+];
+
+const DOC_TYPES = [
+  "Bill of Lading",
+  "Pedimento",
+  "Freight Invoice",
+  "Load Confirmation",
+  "Packing List",
+  "Air Waybill",
+];
+
+// ── STATE ────────────────────────────────────────────────────────────────────
+let state = {
+  mode: "daily",
+  doc: null,
+  guessCount: 0,
+  wrongGuesses: [],
+  solved: false,
+  lucaData: null,
+  lucaStatus: "idle",
+  sheetOpen: false,
+};
+
+function getTodayDoc() {
+  const d = Math.floor(Date.now() / 86400000);
+  return DOCUMENTS[d % DOCUMENTS.length];
+}
+
+
+// ── PDF RENDERING ─────────────────────────────────────────────────────────────
+async function renderPDF(doc) {
+  const wrap = document.getElementById('pdf-wrap');
+  const canvas = document.getElementById('pdf-canvas');
+  const loading = document.getElementById('pdf-loading');
+  const errorEl = document.getElementById('pdf-error');
+
+  // Reset
+  canvas.style.display = 'none';
+  loading.style.display = 'flex';
+  errorEl.style.display = 'none';
+  // Remove old redaction bars
+  wrap.querySelectorAll('.redact-bar').forEach(el => el.remove());
+
+  try {
+    const url = '/' + doc.filename.replace(/ /g, '%20').replace(/\(/g, '%28').replace(/\)/g, '%29');
+    const pdfDoc = await pdfjsLib.getDocument(url).promise;
+    const page = await pdfDoc.getPage(1);
+
+    const viewport = page.getViewport({ scale: 1.5 });
+    const ctx = canvas.getContext('2d');
+    canvas.width = viewport.width;
+    canvas.height = viewport.height;
+
+    await page.render({ canvasContext: ctx, viewport }).promise;
+
+    loading.style.display = 'none';
+    canvas.style.display = 'block';
+
+    // Add redaction bars
+    const rect = canvas.getBoundingClientRect();
+    doc.redactions.forEach(r => {
+      const bar = document.createElement('div');
+      bar.className = 'redact-bar';
+      bar.style.top = r.top + '%';
+      bar.style.left = r.left + '%';
+      bar.style.width = r.width + '%';
+      bar.style.height = r.height + '%';
+      wrap.appendChild(bar);
+    });
+
+  } catch (err) {
+    console.error('PDF error:', err);
+    loading.style.display = 'none';
+    errorEl.style.display = 'flex';
+  }
+}
+
+// ── EXTEND API ────────────────────────────────────────────────────────────────
+async function callExtend(doc) {
+  // Use pre-extracted data instantly — no API call needed
+  state.lucaData = doc.extracted;
+  state.lucaStatus = 'done';
+  renderLuca();
+  if (state.solved) showSuccess();
+}
+
+// ── RENDER ────────────────────────────────────────────────────────────────────
+function renderHints() {
+  const area = document.getElementById('hint-area');
+  if (state.guessCount === 0) { area.innerHTML = ''; return; }
+  area.innerHTML = state.doc.hints.slice(0, state.guessCount).map(h => `
+    <div class="hint-item"><span>💡</span><span class="hint-text">${h}</span></div>
+  `).join('');
+}
+
+function renderGuessButtons() {
+  const maxed = state.guessCount >= 3;
+  document.getElementById('guess-grid').innerHTML = DOC_TYPES.map(t => {
+    const wrong = state.wrongGuesses.includes(t);
+    const correct = state.solved && t === state.doc.type;
+    const used = usedTypes.includes(t) && t !== state.doc.type;
+    const dis = state.solved || wrong || maxed || used;
+    return `<button class="guess-btn ${wrong ? 'wrong' : ''} ${correct ? 'correct' : ''} ${used && !correct ? 'used' : ''}" ${dis ? 'disabled' : ''} onclick="handleGuess('${t.replace(/'/g,"\\'")}')">
+      ${wrong ? '✕ ' : correct ? '✓ ' : ''}${t}
+    </button>`;
+  }).join('');
+}
+
+function lucaInnerHTML() {
+  const doc = state.doc;
+
+  if (state.lucaStatus === 'idle') {
+    return `<div class="luca-idle">
+      <div class="luca-idle-icon">🔍</div>
+      <p class="luca-idle-text">Luca is standing by.<br>Make your first guess to trigger extraction.</p>
+    </div>`;
+  }
+
+  if (state.lucaStatus === 'loading') {
+    return `<div class="luca-processing">
+      <div class="luca-processing-label">Processing Document</div>
+      <div class="luca-processing-steps">
+        <div class="luca-step done"><div class="luca-step-dot"></div>Document received</div>
+        <div class="luca-step active"><div class="luca-step-spinner"></div>Running OCR & extraction...</div>
+        <div class="luca-step"><div class="luca-step-dot"></div>Structuring fields</div>
+        <div class="luca-step"><div class="luca-step-dot"></div>Ready</div>
+      </div>
+    </div>`;
+  }
+
+  if (state.lucaStatus === 'error') {
+    return `<div class="luca-error">⚠️ Extraction failed. Check that the Netlify function is deployed and your API key is set.</div>`;
+  }
+
+  // done
+  const d = state.lucaData || {};
+  const fields = [
+    { key: 'shipper', label: 'Shipper' },
+    { key: 'consignee', label: 'Consignee' },
+    { key: 'origin', label: 'Origin' },
+    { key: 'destination', label: 'Destination' },
+    { key: 'carrier', label: 'Carrier' },
+    { key: 'reference_number', label: 'Reference No.' },
+    { key: 'date', label: 'Date' },
+    { key: 'goods_description', label: 'Goods' },
+    { key: 'total_value', label: 'Total Value' },
+  ];
+
+  const fieldsHTML = fields.map(f => {
+    const val = d[f.key];
+    const isEmpty = !val || val === 'null' || val === 'N/A' || val === '';
+    return `<div class="luca-field-row">
+      <span class="luca-field-key">${f.key}</span>
+      <span class="luca-field-val ${isEmpty ? 'empty' : ''}">${isEmpty ? 'not found' : val}</span>
+    </div>`;
+  }).join('');
+
+  return `<div class="luca-content">
+    <div class="luca-section">
+      <div class="luca-section-label">Document Type</div>
+      <div class="luca-doc-type">${doc.type}</div>
+    </div>
+    <div class="luca-section">
+      <div class="luca-section-label">Extracted Fields</div>
+      <div class="luca-fields">${fieldsHTML}</div>
+    </div>
+    <div class="luca-section">
+      <div class="luca-section-label">Luca's Assessment</div>
+      <div class="luca-note">${doc.lucaNote}</div>
+    </div>
+    <div class="luca-timing">⚡ Luca processed this via Extend in real time.</div>
+  </div>`;
+}
+
+function lucaShell(inner) {
+  return `
+    <div class="luca-header">
+      <div class="luca-avatar">L</div>
+      <div><div class="luca-name">Luca</div><div class="luca-role">AI Freight Agent · Zencargo</div></div>
+      <div class="luca-status"><div class="luca-pulse"></div><span class="luca-online">Active</span></div>
+    </div>
+    <div class="luca-divider"></div>
+    ${inner}
+  `;
+}
+
+function renderLuca() {
+  const inner = lucaInnerHTML();
+  document.getElementById('luca-sidebar-content').innerHTML = lucaShell(inner);
+  document.getElementById('sheet-scroll').innerHTML = lucaShell(inner);
+  const badge = document.getElementById('luca-tab-badge');
+  badge.style.display = state.lucaStatus === 'done' ? 'inline' : 'none';
+}
+
+function renderModeUI() {
+  document.getElementById('mode-chip').textContent = state.mode === 'daily' ? '📅 Daily Challenge' : '🎲 Free Play';
+  document.getElementById('mode-btn').textContent = state.mode === 'daily' ? '🎲 Free Play' : '📅 Daily';
+}
+
+function renderAll() {
+  renderModeUI();
+  renderHints();
+  renderGuessButtons();
+  renderLuca();
+}
+
+// ── ACTIONS ───────────────────────────────────────────────────────────────────
+function handleGuess(type) {
+  if (state.solved || state.wrongGuesses.includes(type) || state.guessCount >= 3) return;
+  state.guessCount++;
+
+  // Trigger Luca on first guess
+  if (state.guessCount === 1) {
+    callExtend(state.doc);
+    if (window.innerWidth < 768) {
+      state.sheetOpen = true;
+      document.getElementById('luca-sheet').classList.add('open');
+      document.getElementById('tab-chevron').textContent = '▼';
+    }
+  }
+
+  if (type === state.doc.type) {
+    state.solved = true;
+    renderAll();
+    showSuccess();
+  } else {
+    state.wrongGuesses.push(type);
+    // All 3 guesses used and still wrong
+    if (state.guessCount >= 3) {
+      state.solved = true;
+      renderAll();
+      showFailure();
+    } else {
+      renderAll();
+    }
+  }
+}
+
+function toggleSheet() {
+  state.sheetOpen = !state.sheetOpen;
+  document.getElementById('luca-sheet').classList.toggle('open', state.sheetOpen);
+  document.getElementById('tab-chevron').textContent = state.sheetOpen ? '▼' : '▲';
+}
+
+function showSuccess() {
+  const doc = state.doc, gc = state.guessCount;
+  const stars = gc === 1 ? 3 : gc === 2 ? 2 : 1;
+  document.getElementById('success-stars').innerHTML = [0,1,2].map(i =>
+    `<span style="opacity:${i < stars ? 1 : 0.2}">★</span>`).join('');
+  document.getElementById('success-type').textContent = doc.type;
+  document.getElementById('success-meta').textContent = gc === 1 ? 'First try — impressive.' : gc === 2 ? 'Got it on the second guess.' : 'Got it on the third guess.';
+  document.getElementById('success-fact').innerHTML = `<strong>Why it matters:</strong> ${doc.facts}`;
+  document.getElementById('success-overlay').classList.add('open');
+}
+
+function showFailure() {
+  document.getElementById('success-stars').innerHTML = [0,1,2].map(() => `<span style="opacity:0.2">★</span>`).join('');
+  document.getElementById('success-type').textContent = state.doc.type;
+  document.getElementById('success-meta').textContent = 'Better luck next time.';
+  document.getElementById('success-fact').innerHTML = `<strong>Why it matters:</strong> ${state.doc.facts}`;
+  document.getElementById('success-overlay').classList.add('open');
+}
+
+function nextDoc() {
+  document.getElementById('success-overlay').classList.remove('open');
+  document.getElementById('luca-sheet').classList.remove('open');
+
+  // Mark current doc type as used
+  if (!usedTypes.includes(state.doc.type)) usedTypes.push(state.doc.type);
+
+  // Pick next doc (getNextDoc resets usedTypes if all 6 done)
+  const newDoc = getNextDoc();
+
+  // Mark new doc as used immediately so it can't be picked again this cycle
+  if (!usedTypes.includes(newDoc.type)) usedTypes.push(newDoc.type);
+
+  state = {
+    mode: 'free',
+    doc: newDoc,
+    guessCount: 0,
+    wrongGuesses: [],
+    solved: false,
+    lucaData: null,
+    lucaStatus: 'idle',
+    sheetOpen: false,
+  };
+
+  document.getElementById('tab-chevron').textContent = '▲';
+  renderAll();
+  renderPDF(state.doc);
+}
+
+document.getElementById('mode-btn').addEventListener('click', () => {
+  state.mode = state.mode === 'daily' ? 'free' : 'daily';
+  usedTypes.length = 0; // reset on mode switch
+  const newDoc = state.mode === 'daily' ? getTodayDoc() : getNextDoc();
+  if (!usedTypes.includes(newDoc.type)) usedTypes.push(newDoc.type);
+  state = { mode: state.mode, doc: newDoc, guessCount: 0, wrongGuesses: [], solved: false, lucaData: null, lucaStatus: 'idle', sheetOpen: false };
+  document.getElementById('luca-sheet').classList.remove('open');
+  document.getElementById('tab-chevron').textContent = '▲';
+  renderAll();
+  renderPDF(state.doc);
+});
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+state.doc = getTodayDoc();
+usedTypes.push(state.doc.type);
+renderAll();
+renderPDF(state.doc);
+</script>
+</body>
+</html>
