@@ -387,7 +387,7 @@ async function renderPDF(doc) {
   wrap.querySelectorAll('.redact-bar').forEach(el => el.remove());
 
   try {
-    const url = '/' + doc.filename;
+    const url = '/' + doc.filename.replace(/ /g, '%20').replace(/\(/g, '%28').replace(/\)/g, '%29');
     const pdfDoc = await pdfjsLib.getDocument(url).promise;
     const page = await pdfDoc.getPage(1);
 
