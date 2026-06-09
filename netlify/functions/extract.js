@@ -16,7 +16,7 @@ exports.handler = async function(event) {
   }
 
   const EXTEND_API_KEY = process.env.EXTEND_API_KEY;
-  const EXTRACTOR_ID = 'Pd8CQZ9uVl8ona0jF7SGO';
+  const EXTRACTOR_ID = 'ex_Pd8CQZ9uVl8ona0jF7SGO';
 
   if (!EXTEND_API_KEY) {
     return {
