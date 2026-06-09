@@ -30,15 +30,15 @@ html,body{min-height:100%;background:#080d14;color:#e2e8f0;font-family:'DM Sans'
 #mode-btn{background:transparent;border:1px solid #1e293b;color:#94a3b8;padding:5px 12px;border-radius:6px;font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif;}
 #mode-btn:hover{border-color:#3b82f6;color:#e2e8f0;}
 
-#main{max-width:1400px;margin:0 auto;width:100%;padding:16px 24px;display:flex;gap:20px;align-items:flex-start;height:calc(100vh - 52px);overflow:hidden;}
-#game-area{flex:1;min-width:0;display:flex;flex-direction:column;gap:12px;height:100%;overflow:hidden;}
+#main{max-width:1400px;margin:0 auto;width:100%;padding:16px 24px;display:grid;grid-template-columns:280px 1fr 280px;gap:20px;height:calc(100vh - 52px);overflow:hidden;align-items:start;}
 
 .prompt-chip{display:inline-flex;align-self:flex-start;background:#0f1f35;border:1px solid #1e3a5f;color:#60a5fa;font-size:11px;font-weight:500;padding:4px 12px;border-radius:20px;letter-spacing:0.03em;}
-#prompt-title{font-size:16px;font-weight:600;color:#f1f5f9;line-height:1.3;margin:6px 0 0;}
-/* Two-column doc+controls layout */
-#doc-and-controls{display:flex;gap:24px;align-items:flex-start;flex:1;overflow:hidden;min-height:0;justify-content:center;}
-#pdf-wrap{flex-shrink:0;width:760px;max-width:760px;position:relative;background:transparent;border:none;border-radius:12px;overflow-y:auto;overflow-x:hidden;height:100%;display:flex;align-items:flex-start;justify-content:center;}
-#controls-col{width:280px;flex-shrink:0;display:flex;flex-direction:column;gap:10px;height:100%;overflow-y:auto;}
+#prompt-title{font-size:16px;font-weight:600;color:#f1f5f9;line-height:1.3;margin:4px 0 0;}
+/* Three column: controls | pdf | luca */
+#controls-col{display:flex;flex-direction:column;gap:10px;height:calc(100vh - 84px);overflow-y:auto;}
+#pdf-wrap{position:relative;background:transparent;border:none;border-radius:12px;overflow-y:auto;overflow-x:hidden;height:calc(100vh - 84px);display:flex;align-items:flex-start;justify-content:center;}
+#luca-sidebar{width:100%;height:calc(100vh - 84px);overflow-y:auto;}
+#guess-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;width:100%;}
 /* Result inline stars */
 #result-inline{display:flex;align-items:center;gap:10px;margin-bottom:4px;}
 #result-stars{font-size:22px;color:#f59e0b;letter-spacing:2px;}
@@ -94,7 +94,7 @@ html,body{min-height:100%;background:#080d14;color:#e2e8f0;font-family:'DM Sans'
 .guess-btn:disabled{cursor:not-allowed;opacity:0.5;}
 
 /* LUCA SIDEBAR */
-#luca-sidebar{width:280px;flex-shrink:0;background:#0a1020;border:1px solid #1e293b;border-radius:12px;height:100%;overflow-y:auto;}
+#luca-sidebar{background:#0a1020;border:1px solid #1e293b;border-radius:12px;}
 .luca-header{display:flex;align-items:center;gap:12px;padding:14px 16px;}
 .luca-avatar{width:34px;height:34px;background:linear-gradient(135deg,#1d4ed8,#3b82f6);border-radius:9px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px;color:#fff;flex-shrink:0;}
 .luca-name{font-size:14px;font-weight:600;color:#f1f5f9;}
@@ -164,15 +164,16 @@ html,body{min-height:100%;background:#080d14;color:#e2e8f0;font-family:'DM Sans'
 #next-btn:hover{filter:brightness(1.1);}
 
 @media(max-width:900px){
-  #doc-and-controls{flex-direction:column;}
-  #pdf-wrap{width:100% !important;}
-}
-@media(max-width:767px){
-  #main{padding:14px 12px 0;flex-direction:column;}
+  #main{grid-template-columns:1fr;height:auto;overflow:auto;}
   #luca-sidebar{display:none;}
   #luca-tab{display:flex;}
+  #controls-col{height:auto;}
+  #pdf-wrap{height:auto;}
   #game-area{padding-bottom:72px;}
   #prompt-title{font-size:15px;}
+}
+@media(max-width:767px){
+  #main{padding:14px 12px 72px;}
 }
 </style>
 </head>
@@ -193,48 +194,38 @@ html,body{min-height:100%;background:#080d14;color:#e2e8f0;font-family:'DM Sans'
 </header>
 
 <div id="main">
-  <div id="game-area">
 
-    <!-- TOP: mode chip + title -->
-    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+  <!-- LEFT: guess buttons, hints, result -->
+  <div id="controls-col">
+    <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:4px;">
       <span class="prompt-chip" id="mode-chip">📅 Daily Challenge</span>
       <h2 id="prompt-title">What type of logistics document is this?</h2>
     </div>
-
-    <!-- MAIN ROW: PDF left, controls right -->
-    <div id="doc-and-controls">
-
-      <!-- PDF -->
-      <div id="pdf-wrap">
-        <div id="pdf-loading"><div class="spinner"></div><span>Loading...</span></div>
-        <div id="pdf-error"><span>⚠️ Could not load document</span></div>
-        <canvas id="pdf-canvas" style="display:none;"></canvas>
+    <div id="hint-area"></div>
+    <div id="guess-grid"></div>
+    <div id="result-banner" style="display:none;">
+      <div id="result-inline">
+        <div id="result-stars"></div>
+        <div id="result-meta"></div>
       </div>
-
-      <!-- RIGHT CONTROLS: hints, guess buttons, result -->
-      <div id="controls-col">
-        <div id="hint-area"></div>
-
-        <div id="guess-grid"></div>
-
-        <!-- Result: stars + points + doc type + next btn -->
-        <div id="result-banner" style="display:none;">
-          <div id="result-inline">
-            <div id="result-stars"></div>
-            <div id="result-meta"></div>
-          </div>
-          <div id="result-type"></div>
-          <div id="result-fact"></div>
-          <button id="next-btn" onclick="nextDoc()">Next Document →</button>
-        </div>
-      </div>
-
+      <div id="result-type"></div>
+      <div id="result-fact"></div>
+      <button id="next-btn" onclick="nextDoc()">Next Document →</button>
     </div>
   </div>
 
+  <!-- CENTER: PDF -->
+  <div id="pdf-wrap">
+    <div id="pdf-loading"><div class="spinner"></div><span>Loading...</span></div>
+    <div id="pdf-error"><span>⚠️ Could not load document</span></div>
+    <canvas id="pdf-canvas" style="display:none;"></canvas>
+  </div>
+
+  <!-- RIGHT: Luca -->
   <aside id="luca-sidebar">
     <div id="luca-sidebar-content"></div>
   </aside>
+
 </div>
 
 <button id="luca-tab" onclick="toggleSheet()">
