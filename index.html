@@ -428,7 +428,7 @@ async function renderPDF(doc) {
     const pdfDoc = await pdfjsLib.getDocument(url).promise;
     const page = await pdfDoc.getPage(1);
 
-    const viewport = page.getViewport({ scale: 1.1 });
+    const viewport = page.getViewport({ scale: 0.9 });
     const ctx = canvas.getContext('2d');
     canvas.width = viewport.width;
     canvas.height = viewport.height;
@@ -641,10 +641,10 @@ function showSuccess() {
   document.getElementById('result-fact').innerHTML = `<strong>Why it matters:</strong> ${doc.facts}`;
   document.getElementById('result-banner').style.display = 'flex';
   document.getElementById('result-banner').style.flexDirection = 'column';
-  // If this was the last doc, auto-advance to end screen after a short delay
-  if (usedTypes.includes(doc.type) || usedTypes.length >= DOC_TYPES.length - 1) {
-    setTimeout(() => nextDoc(), 2500);
+  // If this is the 6th doc (5 already used + current), go straight to end
+  if (usedTypes.length >= DOC_TYPES.length - 1) {
     document.getElementById('next-btn').style.display = 'none';
+    setTimeout(() => nextDoc(), 2000);
   }
 }
 
@@ -656,10 +656,10 @@ function showFailure() {
   document.getElementById('result-fact').innerHTML = `<strong>Why it matters:</strong> ${state.doc.facts}`;
   document.getElementById('result-banner').style.display = 'flex';
   document.getElementById('result-banner').style.flexDirection = 'column';
-  // If this was the last doc, auto-advance to end screen after a short delay
-  if (usedTypes.includes(state.doc.type) || usedTypes.length >= DOC_TYPES.length - 1) {
-    setTimeout(() => nextDoc(), 2500);
+  // If this is the 6th doc (5 already used + current), go straight to end
+  if (usedTypes.length >= DOC_TYPES.length - 1) {
     document.getElementById('next-btn').style.display = 'none';
+    setTimeout(() => nextDoc(), 2000);
   }
 }
 
