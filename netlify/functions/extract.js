@@ -1,4 +1,16 @@
 exports.handler = async function(event) {
+  if (event.httpMethod === 'OPTIONS') {
+    return {
+      statusCode: 200,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Headers': 'Content-Type',
+        'Access-Control-Allow-Methods': 'POST, OPTIONS',
+      },
+      body: '',
+    };
+  }
+
   if (event.httpMethod !== 'POST') {
     return { statusCode: 405, body: 'Method Not Allowed' };
   }
@@ -7,81 +19,124 @@ exports.handler = async function(event) {
   const EXTRACTOR_ID = 'Pd8CQZ9uVl8ona0jF7SGO';
 
   if (!EXTEND_API_KEY) {
-    return { statusCode: 500, body: JSON.stringify({ error: 'Missing EXTEND_API_KEY' }) };
+    return {
+      statusCode: 500,
+      headers: { 'Access-Control-Allow-Origin': '*' },
+      body: JSON.stringify({ error: 'Missing EXTEND_API_KEY environment variable' }),
+    };
   }
 
   let filename;
   try {
     ({ filename } = JSON.parse(event.body));
   } catch {
-    return { statusCode: 400, body: JSON.stringify({ error: 'Invalid JSON body' }) };
+    return {
+      statusCode: 400,
+      headers: { 'Access-Control-Allow-Origin': '*' },
+      body: JSON.stringify({ error: 'Invalid JSON body' }),
+    };
   }
 
-  // Build the public URL of the PDF hosted on Netlify
-  const host = event.headers['x-forwarded-host'] || event.headers.host;
-  const pdfUrl = `https://${host}/${filename}`;
+  // Build the public URL of the PDF
+  const host = event.headers['x-forwarded-host'] || event.headers['host'];
+  const proto = 'https';
+  const encodedFilename = filename.replace(/ /g, '%20').replace(/\(/g, '%28').replace(/\)/g, '%29');
+  const pdfUrl = `${proto}://${host}/${encodedFilename}`;
+
+  console.log('Calling Extend with PDF URL:', pdfUrl);
+  console.log('Extractor ID:', EXTRACTOR_ID);
 
   try {
-    // Step 1: Create an extraction run
-    const runRes = await fetch('https://api.extend.ai/v1/extract', {
+    const res = await fetch('https://api.extend.ai/v1/extract_runs', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${EXTEND_API_KEY}`,
         'Content-Type': 'application/json',
+        'x-extend-api-version': '2026-02-09',
       },
       body: JSON.stringify({
-        extractor_id: EXTRACTOR_ID,
-        document_url: pdfUrl,
+        extractor: { id: EXTRACTOR_ID },
+        file: { url: pdfUrl },
       }),
     });
 
-    if (!runRes.ok) {
-      const err = await runRes.text();
-      console.error('Extend run error:', err);
-      return { statusCode: 502, body: JSON.stringify({ error: 'Extend API error', detail: err }) };
-    }
+    const responseText = await res.text();
+    console.log('Extend response status:', res.status);
+    console.log('Extend response body:', responseText);
 
-    const runData = await runRes.json();
-
-    // Step 2: Poll for result (Extend may be async)
-    // If result already in response, return it
-    if (runData.output) {
+    if (!res.ok) {
       return {
-        statusCode: 200,
-        headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
-        body: JSON.stringify(runData.output),
+        statusCode: 502,
+        headers: { 'Access-Control-Allow-Origin': '*' },
+        body: JSON.stringify({ error: 'Extend API error', status: res.status, detail: responseText }),
       };
     }
 
-    // Otherwise poll
-    const runId = runData.id || runData.run_id;
-    if (!runId) {
-      return { statusCode: 200, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(runData) };
+    const data = JSON.parse(responseText);
+
+    // If already complete
+    if (data.status === 'completed' && data.output) {
+      return {
+        statusCode: 200,
+        headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+        body: JSON.stringify(data.output),
+      };
     }
 
-    // Poll up to 30s
-    for (let i = 0; i < 15; i++) {
+    // Poll for completion
+    const runId = data.id;
+    if (!runId) {
+      return {
+        statusCode: 200,
+        headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+        body: JSON.stringify(data),
+      };
+    }
+
+    for (let i = 0; i < 20; i++) {
       await new Promise(r => setTimeout(r, 2000));
-      const pollRes = await fetch(`https://api.extend.ai/v1/extract/${runId}`, {
-        headers: { 'Authorization': `Bearer ${EXTEND_API_KEY}` },
+
+      const pollRes = await fetch(`https://api.extend.ai/v1/extract_runs/${runId}`, {
+        headers: {
+          'Authorization': `Bearer ${EXTEND_API_KEY}`,
+          'x-extend-api-version': '2026-02-09',
+        },
       });
-      const pollData = await pollRes.json();
-      if (pollData.status === 'completed' || pollData.output) {
+
+      const pollText = await pollRes.text();
+      console.log(`Poll ${i+1} status:`, pollRes.status, pollText.slice(0, 200));
+
+      const pollData = JSON.parse(pollText);
+
+      if (pollData.status === 'completed' && pollData.output) {
         return {
           statusCode: 200,
           headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
-          body: JSON.stringify(pollData.output || pollData),
+          body: JSON.stringify(pollData.output),
         };
       }
+
       if (pollData.status === 'failed') {
-        return { statusCode: 502, body: JSON.stringify({ error: 'Extraction failed' }) };
+        return {
+          statusCode: 502,
+          headers: { 'Access-Control-Allow-Origin': '*' },
+          body: JSON.stringify({ error: 'Extraction failed', detail: pollData }),
+        };
       }
     }
 
-    return { statusCode: 504, body: JSON.stringify({ error: 'Extraction timed out' }) };
+    return {
+      statusCode: 504,
+      headers: { 'Access-Control-Allow-Origin': '*' },
+      body: JSON.stringify({ error: 'Extraction timed out after 40 seconds' }),
+    };
 
   } catch (err) {
     console.error('Function error:', err);
-    return { statusCode: 500, body: JSON.stringify({ error: err.message }) };
+    return {
+      statusCode: 500,
+      headers: { 'Access-Control-Allow-Origin': '*' },
+      body: JSON.stringify({ error: err.message }),
+    };
   }
 };
