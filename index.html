@@ -367,6 +367,13 @@ function getTodayDoc() {
   return DOCUMENTS[d % DOCUMENTS.length];
 }
 
+function getNextDoc() {
+  // If all 6 used, reset so we cycle through again
+  if (usedTypes.length >= DOC_TYPES.length) usedTypes.length = 0;
+  const available = DOCUMENTS.filter(d => !usedTypes.includes(d.type));
+  return available[Math.floor(Math.random() * available.length)];
+}
+
 
 // ── PDF RENDERING ─────────────────────────────────────────────────────────────
 async function renderPDF(doc) {
@@ -591,7 +598,9 @@ function showSuccess() {
   document.getElementById('success-type').textContent = doc.type;
   document.getElementById('success-meta').textContent = gc === 1 ? 'First try — impressive.' : gc === 2 ? 'Got it on the second guess.' : 'Got it on the third guess.';
   document.getElementById('success-fact').innerHTML = `<strong>Why it matters:</strong> ${doc.facts}`;
-  document.getElementById('success-overlay').classList.add('open');
+  const overlay = document.getElementById('success-overlay');
+  overlay.classList.add('open');
+  overlay.style.display = 'flex';
 }
 
 function showFailure() {
@@ -599,11 +608,15 @@ function showFailure() {
   document.getElementById('success-type').textContent = state.doc.type;
   document.getElementById('success-meta').textContent = 'Better luck next time.';
   document.getElementById('success-fact').innerHTML = `<strong>Why it matters:</strong> ${state.doc.facts}`;
-  document.getElementById('success-overlay').classList.add('open');
+  const overlay = document.getElementById('success-overlay');
+  overlay.classList.add('open');
+  overlay.style.display = 'flex';
 }
 
 function nextDoc() {
-  document.getElementById('success-overlay').classList.remove('open');
+  const overlay = document.getElementById('success-overlay');
+  overlay.classList.remove('open');
+  overlay.style.display = '';
   document.getElementById('luca-sheet').classList.remove('open');
 
   // Mark current doc type as used
@@ -616,7 +629,7 @@ function nextDoc() {
   if (!usedTypes.includes(newDoc.type)) usedTypes.push(newDoc.type);
 
   state = {
-    mode: 'free',
+    mode: state.mode,
     doc: newDoc,
     guessCount: 0,
     wrongGuesses: [],
