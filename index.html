@@ -348,6 +348,9 @@ const DOC_TYPES = [
 ];
 
 // ── STATE ────────────────────────────────────────────────────────────────────
+// usedTypes persists across the entire session — never shrinks until all 6 done
+const usedTypes = [];
+
 let state = {
   mode: "daily",
   doc: null,
