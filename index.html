@@ -34,8 +34,13 @@ html,body{min-height:100%;background:#080d14;color:#e2e8f0;font-family:'DM Sans'
 #game-area{flex:1;min-width:0;display:flex;flex-direction:column;gap:18px;}
 
 .prompt-chip{display:inline-flex;align-self:flex-start;background:#0f1f35;border:1px solid #1e3a5f;color:#60a5fa;font-size:11px;font-weight:500;padding:4px 12px;border-radius:20px;letter-spacing:0.03em;}
-#prompt-title{font-size:18px;font-weight:600;color:#f1f5f9;line-height:1.3;margin:6px 0 4px;}
-#prompt-sub{font-size:13px;color:#475569;}
+#prompt-title{font-size:16px;font-weight:600;color:#f1f5f9;line-height:1.3;margin:6px 0 0;}
+#status-row{display:flex;gap:16px;align-items:flex-start;}
+#status-left{flex-shrink:0;display:flex;flex-direction:column;gap:4px;}
+#status-right{flex:1;min-width:0;display:flex;flex-direction:column;gap:8px;}
+#result-inline{display:flex;align-items:center;gap:10px;background:#0d1627;border:1px solid #1e3a5f;border-radius:8px;padding:8px 12px;animation:slideIn 0.3s ease;}
+#result-inline #result-stars{font-size:18px;color:#f59e0b;letter-spacing:2px;white-space:nowrap;}
+#result-inline #result-meta{font-size:12px;color:#94a3b8;}
 
 /* PDF VIEWER */
 #pdf-wrap{
@@ -173,7 +178,9 @@ html,body{min-height:100%;background:#080d14;color:#e2e8f0;font-family:'DM Sans'
   #luca-sidebar{display:none;}
   #luca-tab{display:flex;}
   #game-area{padding-bottom:72px;}
-  #prompt-title{font-size:16px;}
+  #prompt-title{font-size:15px;}
+  #status-row{flex-direction:column;gap:10px;}
+  #status-right{width:100%;}
 }
 </style>
 </head>
@@ -195,10 +202,20 @@ html,body{min-height:100%;background:#080d14;color:#e2e8f0;font-family:'DM Sans'
 
 <div id="main">
   <div id="game-area">
-    <div>
-      <span class="prompt-chip" id="mode-chip">📅 Daily Challenge</span>
-      <h2 id="prompt-title">What type of logistics document is this?</h2>
-      <p id="prompt-sub">Study the document carefully. The document type has been redacted.</p>
+
+    <!-- TOP STATUS ROW: mode chip + hints + result all in one compact bar -->
+    <div id="status-row">
+      <div id="status-left">
+        <span class="prompt-chip" id="mode-chip">📅 Daily Challenge</span>
+        <h2 id="prompt-title">What type of logistics document is this?</h2>
+      </div>
+      <div id="status-right">
+        <div id="hint-area"></div>
+        <div id="result-inline" style="display:none;">
+          <div id="result-stars"></div>
+          <div id="result-meta"></div>
+        </div>
+      </div>
     </div>
 
     <!-- PDF VIEWER -->
@@ -211,15 +228,14 @@ html,body{min-height:100%;background:#080d14;color:#e2e8f0;font-family:'DM Sans'
         <span>⚠️ Could not load document</span>
       </div>
       <canvas id="pdf-canvas" style="display:none;"></canvas>
-      <!-- Redaction bars injected here by JS -->
     </div>
 
-    <div id="hint-area"></div>
+    <!-- GUESS BUTTONS -->
     <div id="guess-grid"></div>
+
+    <!-- RESULT BANNER (below buttons, compact) -->
     <div id="result-banner" style="display:none;">
-      <div id="result-stars"></div>
       <div id="result-type"></div>
-      <div id="result-meta"></div>
       <div id="result-fact"></div>
       <button id="next-btn" onclick="nextDoc()">Next Document →</button>
     </div>
@@ -428,7 +444,7 @@ async function renderPDF(doc) {
     const pdfDoc = await pdfjsLib.getDocument(url).promise;
     const page = await pdfDoc.getPage(1);
 
-    const viewport = page.getViewport({ scale: 0.9 });
+    const viewport = page.getViewport({ scale: 0.7 });
     const ctx = canvas.getContext('2d');
     canvas.width = viewport.width;
     canvas.height = viewport.height;
@@ -634,37 +650,44 @@ function toggleSheet() {
 function showSuccess() {
   const doc = state.doc, gc = state.guessCount;
   const pts = gc === 1 ? 3 : gc === 2 ? 2 : 1;
+  // Show stars inline at top
   document.getElementById('result-stars').innerHTML = '★'.repeat(pts) + '<span style="opacity:0.2">' + '★'.repeat(3-pts) + '</span>';
-  document.getElementById('result-type').textContent = '✓ ' + doc.type;
   document.getElementById('result-meta').innerHTML =
-    `<span style="color:#4ade80;font-weight:600;">+${pts} point${pts !== 1 ? 's' : ''}</span> &nbsp;·&nbsp; ${gc === 1 ? 'First try — impressive.' : gc === 2 ? 'Second guess.' : 'Third guess.'}`;
+    `<span style="color:#4ade80;font-weight:600;">+${pts} pts</span> &nbsp;·&nbsp; ${gc === 1 ? 'First try!' : gc === 2 ? '2nd guess' : '3rd guess'}`;
+  document.getElementById('result-inline').style.display = 'flex';
+  // Show result banner below
+  document.getElementById('result-type').textContent = '✓ ' + doc.type;
   document.getElementById('result-fact').innerHTML = `<strong>Why it matters:</strong> ${doc.facts}`;
   document.getElementById('result-banner').style.display = 'flex';
   document.getElementById('result-banner').style.flexDirection = 'column';
-  // If this is the 6th doc (5 already used + current), go straight to end
+  // If this is the last doc, go straight to end
   if (usedTypes.length >= DOC_TYPES.length - 1) {
     document.getElementById('next-btn').style.display = 'none';
-    setTimeout(() => nextDoc(), 2000);
+    setTimeout(() => nextDoc(), 2200);
   }
 }
 
 function showFailure() {
+  // Show stars inline at top
   document.getElementById('result-stars').innerHTML = '<span style="opacity:0.2">★★★</span>';
-  document.getElementById('result-type').textContent = '✕ ' + state.doc.type;
   document.getElementById('result-meta').innerHTML =
-    `<span style="color:#ef4444;font-weight:600;">+0 points</span> &nbsp;·&nbsp; Better luck next time.`;
+    `<span style="color:#ef4444;font-weight:600;">+0 pts</span> &nbsp;·&nbsp; Better luck next time`;
+  document.getElementById('result-inline').style.display = 'flex';
+  // Show result banner below
+  document.getElementById('result-type').textContent = '✕ ' + state.doc.type;
   document.getElementById('result-fact').innerHTML = `<strong>Why it matters:</strong> ${state.doc.facts}`;
   document.getElementById('result-banner').style.display = 'flex';
   document.getElementById('result-banner').style.flexDirection = 'column';
-  // If this is the 6th doc (5 already used + current), go straight to end
+  // If this is the last doc, go straight to end
   if (usedTypes.length >= DOC_TYPES.length - 1) {
     document.getElementById('next-btn').style.display = 'none';
-    setTimeout(() => nextDoc(), 2000);
+    setTimeout(() => nextDoc(), 2200);
   }
 }
 
 function nextDoc() {
   document.getElementById('result-banner').style.display = 'none';
+  document.getElementById('result-inline').style.display = 'none';
   document.getElementById('next-btn').style.display = '';
   document.getElementById('luca-sheet').classList.remove('open');
 
