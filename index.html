@@ -365,8 +365,8 @@ function getTodayDoc() {
   const d = Math.floor(Date.now() / 86400000);
   return DOCUMENTS[d % DOCUMENTS.length];
 }
-function getRandomDoc(seenIds) {
-  const unseen = DOCUMENTS.filter(d => !seenIds.includes(d.id));
+function getRandomDoc(seenTypes) {
+  const unseen = DOCUMENTS.filter(d => !seenTypes.includes(d.type));
   const pool = unseen.length > 0 ? unseen : DOCUMENTS;
   return pool[Math.floor(Math.random() * pool.length)];
 }
@@ -615,7 +615,7 @@ function nextDoc() {
   let newSeenIds = [...state.seenIds, state.doc.id];
   if (newSeenIds.length >= DOCUMENTS.length) newSeenIds = [];
 
-  const newDoc = getRandomDoc(newSeenIds);
+  const newDoc = getRandomDoc(newSeenTypes);
 
   state = {
     mode: 'free',
@@ -627,7 +627,7 @@ function nextDoc() {
     lucaStatus: 'idle',
     sheetOpen: false,
     seenIds: [...newSeenIds, newDoc.id],
-    seenTypes: newSeenTypes,
+    seenTypes: [...newSeenTypes, newDoc.type],
   };
 
   document.getElementById('tab-chevron').textContent = '▲';
@@ -638,7 +638,7 @@ function nextDoc() {
 document.getElementById('mode-btn').addEventListener('click', () => {
   state.mode = state.mode === 'daily' ? 'free' : 'daily';
   const newDoc = state.mode === 'daily' ? getTodayDoc() : getRandomDoc([]);
-  state = { mode: state.mode, doc: newDoc, guessCount: 0, wrongGuesses: [], solved: false, lucaData: null, lucaStatus: 'idle', sheetOpen: false, seenIds: [newDoc.id], seenTypes: [] };
+  state = { mode: state.mode, doc: newDoc, guessCount: 0, wrongGuesses: [], solved: false, lucaData: null, lucaStatus: 'idle', sheetOpen: false, seenIds: [newDoc.id], seenTypes: [newDoc.type] };
   document.getElementById('luca-sheet').classList.remove('open');
   document.getElementById('tab-chevron').textContent = '▲';
   renderAll();
@@ -648,7 +648,7 @@ document.getElementById('mode-btn').addEventListener('click', () => {
 // ── INIT ──────────────────────────────────────────────────────────────────────
 state.doc = getTodayDoc();
 state.seenIds = [state.doc.id];
-state.seenTypes = [];
+state.seenTypes = [state.doc.type];
 renderAll();
 renderPDF(state.doc);
 </script>
