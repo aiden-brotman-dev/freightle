@@ -93,6 +93,7 @@ html,body{min-height:100%;background:#080d14;color:#e2e8f0;font-family:'DM Sans'
 .guess-btn:hover:not(:disabled):not(.wrong){border-color:#3b82f6;color:#e2e8f0;background:#0f1f35;}
 .guess-btn.wrong{background:#1a0a0a;border-color:#3f1010;color:#6b1f1f;cursor:not-allowed;}
 .guess-btn.correct{background:#0a1f0f;border-color:#166534;color:#4ade80;cursor:not-allowed;}
+.guess-btn.used{opacity:0.25;cursor:not-allowed;}
 .guess-btn:disabled{cursor:not-allowed;opacity:0.5;}
 
 /* LUCA SIDEBAR */
@@ -357,6 +358,7 @@ let state = {
   lucaStatus: "idle",
   sheetOpen: false,
   seenIds: [],
+  seenTypes: [], // doc types already played, permanently greyed out
 };
 
 function getTodayDoc() {
@@ -441,8 +443,9 @@ function renderGuessButtons() {
   document.getElementById('guess-grid').innerHTML = DOC_TYPES.map(t => {
     const wrong = state.wrongGuesses.includes(t);
     const correct = state.solved && t === state.doc.type;
-    const dis = state.solved || wrong || maxed;
-    return `<button class="guess-btn ${wrong ? 'wrong' : ''} ${correct ? 'correct' : ''}" ${dis ? 'disabled' : ''} onclick="handleGuess('${t.replace(/'/g,"\\'")}')">
+    const used = state.seenTypes.includes(t);
+    const dis = state.solved || wrong || maxed || used;
+    return `<button class="guess-btn ${wrong ? 'wrong' : ''} ${correct ? 'correct' : ''} ${used && !correct ? 'used' : ''}" ${dis ? 'disabled' : ''} onclick="handleGuess('${t.replace(/'/g,"\\'")}')">
       ${wrong ? '✕ ' : correct ? '✓ ' : ''}${t}
     </button>`;
   }).join('');
@@ -606,12 +609,15 @@ function showFailure() {
 function nextDoc() {
   document.getElementById('success-overlay').classList.remove('open');
   document.getElementById('luca-sheet').classList.remove('open');
-  // Add current doc to seen, reset if all 6 seen
+  // Track seen types — reset when all 6 done
+  let newSeenTypes = [...state.seenTypes, state.doc.type];
+  if (newSeenTypes.length >= DOC_TYPES.length) newSeenTypes = [];
+  // Track seen ids for no-repeat
   let newSeenIds = [...state.seenIds, state.doc.id];
   if (newSeenIds.length >= DOCUMENTS.length) newSeenIds = [state.doc.id];
   const newDoc = getRandomDoc(newSeenIds);
   newSeenIds.push(newDoc.id);
-  state = { mode: 'free', doc: newDoc, guessCount: 0, wrongGuesses: [], solved: false, lucaData: null, lucaStatus: 'idle', sheetOpen: false, seenIds: newSeenIds };
+  state = { mode: 'free', doc: newDoc, guessCount: 0, wrongGuesses: [], solved: false, lucaData: null, lucaStatus: 'idle', sheetOpen: false, seenIds: newSeenIds, seenTypes: newSeenTypes };
   document.getElementById('tab-chevron').textContent = '▲';
   renderAll();
   renderPDF(state.doc);
@@ -620,7 +626,7 @@ function nextDoc() {
 document.getElementById('mode-btn').addEventListener('click', () => {
   state.mode = state.mode === 'daily' ? 'free' : 'daily';
   const newDoc = state.mode === 'daily' ? getTodayDoc() : getRandomDoc([]);
-  state = { mode: state.mode, doc: newDoc, guessCount: 0, wrongGuesses: [], solved: false, lucaData: null, lucaStatus: 'idle', sheetOpen: false, seenIds: [newDoc.id] };
+  state = { mode: state.mode, doc: newDoc, guessCount: 0, wrongGuesses: [], solved: false, lucaData: null, lucaStatus: 'idle', sheetOpen: false, seenIds: [newDoc.id], seenTypes: [] };
   document.getElementById('luca-sheet').classList.remove('open');
   document.getElementById('tab-chevron').textContent = '▲';
   renderAll();
@@ -630,6 +636,7 @@ document.getElementById('mode-btn').addEventListener('click', () => {
 // ── INIT ──────────────────────────────────────────────────────────────────────
 state.doc = getTodayDoc();
 state.seenIds = [state.doc.id];
+state.seenTypes = [];
 renderAll();
 renderPDF(state.doc);
 </script>
