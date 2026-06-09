@@ -35,28 +35,19 @@ html,body{min-height:100%;background:#080d14;color:#e2e8f0;font-family:'DM Sans'
 
 .prompt-chip{display:inline-flex;align-self:flex-start;background:#0f1f35;border:1px solid #1e3a5f;color:#60a5fa;font-size:11px;font-weight:500;padding:4px 12px;border-radius:20px;letter-spacing:0.03em;}
 #prompt-title{font-size:16px;font-weight:600;color:#f1f5f9;line-height:1.3;margin:6px 0 0;}
-#status-row{display:flex;gap:16px;align-items:flex-start;}
-#status-left{flex-shrink:0;display:flex;flex-direction:column;gap:4px;}
-#status-right{flex:1;min-width:0;display:flex;flex-direction:column;gap:8px;}
-#result-inline{display:flex;align-items:center;gap:10px;background:#0d1627;border:1px solid #1e3a5f;border-radius:8px;padding:8px 12px;animation:slideIn 0.3s ease;}
-#result-inline #result-stars{font-size:18px;color:#f59e0b;letter-spacing:2px;white-space:nowrap;}
-#result-inline #result-meta{font-size:12px;color:#94a3b8;}
+/* Two-column doc+controls layout */
+#doc-and-controls{display:flex;gap:16px;align-items:flex-start;}
+#pdf-wrap{flex-shrink:0;width:380px;max-width:380px;position:relative;background:#1a1a1a;border:1px solid #1e293b;border-radius:12px;overflow:hidden;min-height:300px;display:flex;align-items:flex-start;justify-content:center;}
+#controls-col{flex:1;min-width:0;display:flex;flex-direction:column;gap:14px;}
+/* Result inline stars */
+#result-inline{display:flex;align-items:center;gap:10px;margin-bottom:4px;}
+#result-stars{font-size:22px;color:#f59e0b;letter-spacing:2px;}
+#result-meta{font-size:13px;color:#94a3b8;}
 
-/* PDF VIEWER */
-#pdf-wrap{
-  position:relative;
-  background:#1a1a1a;
-  border:1px solid #1e293b;
-  border-radius:12px;
-  overflow:hidden;
-  min-height:500px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-}
+/* PDF VIEWER - sizing handled by #doc-and-controls */
 #pdf-canvas{
   display:block;
-  width:100%;
+  max-width:100%;
   height:auto;
   border-radius:12px;
 }
@@ -156,11 +147,10 @@ html,body{min-height:100%;background:#080d14;color:#e2e8f0;font-family:'DM Sans'
 #sheet-scroll{overflow-y:auto;flex:1;padding-bottom:16px;}
 
 /* SUCCESS */
-#result-banner{background:#0d1627;border:1px solid #1e3a5f;border-radius:12px;padding:20px;display:none;flex-direction:column;gap:12px;animation:slideIn 0.3s ease;}
-#result-stars{font-size:28px;color:#f59e0b;letter-spacing:4px;}
-#result-type{font-size:20px;font-weight:700;color:#60a5fa;font-family:'Space Mono',monospace;}
-#result-meta{font-size:13px;color:#94a3b8;}
-#result-fact{font-size:12px;color:#64748b;line-height:1.6;background:#080d14;padding:12px;border-radius:8px;border:1px solid #1e293b;}
+#result-banner{background:#0d1627;border:1px solid #1e3a5f;border-radius:12px;padding:16px;display:none;flex-direction:column;gap:10px;animation:slideIn 0.3s ease;}
+#result-type{font-size:16px;font-weight:700;color:#60a5fa;font-family:'Space Mono',monospace;}
+#result-meta{font-size:12px;color:#94a3b8;}
+#result-fact{font-size:11px;color:#64748b;line-height:1.6;background:#080d14;padding:10px;border-radius:8px;border:1px solid #1e293b;}
 .success-card{background:#0d1627;border:1px solid #1e3a5f;border-radius:16px;padding:28px 24px;max-width:440px;width:100%;text-align:center;display:flex;flex-direction:column;align-items:center;gap:10px;animation:slideIn 0.3s ease;}
 .success-stars{display:flex;gap:6px;color:#f59e0b;font-size:26px;}
 .success-title{font-size:11px;color:#475569;letter-spacing:0.1em;text-transform:uppercase;}
@@ -173,14 +163,16 @@ html,body{min-height:100%;background:#080d14;color:#e2e8f0;font-family:'DM Sans'
 #end-overlay.open{display:flex;}
 #next-btn:hover{filter:brightness(1.1);}
 
+@media(max-width:900px){
+  #doc-and-controls{flex-direction:column;}
+  #pdf-wrap{width:100% !important;}
+}
 @media(max-width:767px){
   #main{padding:14px 12px 0;flex-direction:column;}
   #luca-sidebar{display:none;}
   #luca-tab{display:flex;}
   #game-area{padding-bottom:72px;}
   #prompt-title{font-size:15px;}
-  #status-row{flex-direction:column;gap:10px;}
-  #status-right{width:100%;}
 }
 </style>
 </head>
@@ -203,41 +195,40 @@ html,body{min-height:100%;background:#080d14;color:#e2e8f0;font-family:'DM Sans'
 <div id="main">
   <div id="game-area">
 
-    <!-- TOP STATUS ROW: mode chip + hints + result all in one compact bar -->
-    <div id="status-row">
-      <div id="status-left">
-        <span class="prompt-chip" id="mode-chip">📅 Daily Challenge</span>
-        <h2 id="prompt-title">What type of logistics document is this?</h2>
+    <!-- TOP: mode chip + title -->
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+      <span class="prompt-chip" id="mode-chip">📅 Daily Challenge</span>
+      <h2 id="prompt-title">What type of logistics document is this?</h2>
+    </div>
+
+    <!-- MAIN ROW: PDF left, controls right -->
+    <div id="doc-and-controls">
+
+      <!-- PDF -->
+      <div id="pdf-wrap">
+        <div id="pdf-loading"><div class="spinner"></div><span>Loading...</span></div>
+        <div id="pdf-error"><span>⚠️ Could not load document</span></div>
+        <canvas id="pdf-canvas" style="display:none;"></canvas>
       </div>
-      <div id="status-right">
+
+      <!-- RIGHT CONTROLS: hints, guess buttons, result -->
+      <div id="controls-col">
         <div id="hint-area"></div>
-        <div id="result-inline" style="display:none;">
-          <div id="result-stars"></div>
-          <div id="result-meta"></div>
+
+        <div id="guess-grid"></div>
+
+        <!-- Result: stars + points + doc type + next btn -->
+        <div id="result-banner" style="display:none;">
+          <div id="result-inline">
+            <div id="result-stars"></div>
+            <div id="result-meta"></div>
+          </div>
+          <div id="result-type"></div>
+          <div id="result-fact"></div>
+          <button id="next-btn" onclick="nextDoc()">Next Document →</button>
         </div>
       </div>
-    </div>
 
-    <!-- PDF VIEWER -->
-    <div id="pdf-wrap">
-      <div id="pdf-loading">
-        <div class="spinner"></div>
-        <span>Loading document...</span>
-      </div>
-      <div id="pdf-error">
-        <span>⚠️ Could not load document</span>
-      </div>
-      <canvas id="pdf-canvas" style="display:none;"></canvas>
-    </div>
-
-    <!-- GUESS BUTTONS -->
-    <div id="guess-grid"></div>
-
-    <!-- RESULT BANNER (below buttons, compact) -->
-    <div id="result-banner" style="display:none;">
-      <div id="result-type"></div>
-      <div id="result-fact"></div>
-      <button id="next-btn" onclick="nextDoc()">Next Document →</button>
     </div>
   </div>
 
@@ -444,7 +435,7 @@ async function renderPDF(doc) {
     const pdfDoc = await pdfjsLib.getDocument(url).promise;
     const page = await pdfDoc.getPage(1);
 
-    const viewport = page.getViewport({ scale: 0.7 });
+    const viewport = page.getViewport({ scale: 0.45 });
     const ctx = canvas.getContext('2d');
     canvas.width = viewport.width;
     canvas.height = viewport.height;
@@ -654,8 +645,6 @@ function showSuccess() {
   document.getElementById('result-stars').innerHTML = '★'.repeat(pts) + '<span style="opacity:0.2">' + '★'.repeat(3-pts) + '</span>';
   document.getElementById('result-meta').innerHTML =
     `<span style="color:#4ade80;font-weight:600;">+${pts} pts</span> &nbsp;·&nbsp; ${gc === 1 ? 'First try!' : gc === 2 ? '2nd guess' : '3rd guess'}`;
-  document.getElementById('result-inline').style.display = 'flex';
-  // Show result banner below
   document.getElementById('result-type').textContent = '✓ ' + doc.type;
   document.getElementById('result-fact').innerHTML = `<strong>Why it matters:</strong> ${doc.facts}`;
   document.getElementById('result-banner').style.display = 'flex';
@@ -672,8 +661,6 @@ function showFailure() {
   document.getElementById('result-stars').innerHTML = '<span style="opacity:0.2">★★★</span>';
   document.getElementById('result-meta').innerHTML =
     `<span style="color:#ef4444;font-weight:600;">+0 pts</span> &nbsp;·&nbsp; Better luck next time`;
-  document.getElementById('result-inline').style.display = 'flex';
-  // Show result banner below
   document.getElementById('result-type').textContent = '✕ ' + state.doc.type;
   document.getElementById('result-fact').innerHTML = `<strong>Why it matters:</strong> ${state.doc.facts}`;
   document.getElementById('result-banner').style.display = 'flex';
@@ -687,7 +674,6 @@ function showFailure() {
 
 function nextDoc() {
   document.getElementById('result-banner').style.display = 'none';
-  document.getElementById('result-inline').style.display = 'none';
   document.getElementById('next-btn').style.display = '';
   document.getElementById('luca-sheet').classList.remove('open');
 
