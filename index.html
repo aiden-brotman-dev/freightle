@@ -357,19 +357,13 @@ let state = {
   lucaData: null,
   lucaStatus: "idle",
   sheetOpen: false,
-  seenIds: [],
-  seenTypes: [], // doc types already played, permanently greyed out
 };
 
 function getTodayDoc() {
   const d = Math.floor(Date.now() / 86400000);
   return DOCUMENTS[d % DOCUMENTS.length];
 }
-function getRandomDoc(seenTypes) {
-  const unseen = DOCUMENTS.filter(d => !seenTypes.includes(d.type));
-  const pool = unseen.length > 0 ? unseen : DOCUMENTS;
-  return pool[Math.floor(Math.random() * pool.length)];
-}
+
 
 // ── PDF RENDERING ─────────────────────────────────────────────────────────────
 async function renderPDF(doc) {
@@ -442,7 +436,7 @@ function renderGuessButtons() {
   document.getElementById('guess-grid').innerHTML = DOC_TYPES.map(t => {
     const wrong = state.wrongGuesses.includes(t);
     const correct = state.solved && t === state.doc.type;
-    const used = state.seenTypes.includes(t);
+    const used = usedTypes.includes(t) && t !== state.doc.type;
     const dis = state.solved || wrong || maxed || used;
     return `<button class="guess-btn ${wrong ? 'wrong' : ''} ${correct ? 'correct' : ''} ${used && !correct ? 'used' : ''}" ${dis ? 'disabled' : ''} onclick="handleGuess('${t.replace(/'/g,"\\'")}')">
       ${wrong ? '✕ ' : correct ? '✓ ' : ''}${t}
