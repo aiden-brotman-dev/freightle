@@ -1,0 +1,8 @@
+[build]
+  functions = "netlify/functions"
+  publish = "."
+
+[[headers]]
+  for = "/*.pdf"
+  [headers.values]
+    Access-Control-Allow-Origin = "*"
