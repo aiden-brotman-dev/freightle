@@ -609,12 +609,15 @@ function nextDoc() {
   document.getElementById('success-overlay').classList.remove('open');
   document.getElementById('luca-sheet').classList.remove('open');
 
-  let newSeenTypes = [...state.seenTypes, state.doc.type];
-  if (newSeenTypes.length >= DOC_TYPES.length) newSeenTypes = [];
+  // Add current doc type to seen
+  const completedTypes = [...state.seenTypes, state.doc.type];
 
-  let newSeenIds = [...state.seenIds, state.doc.id];
-  if (newSeenIds.length >= DOCUMENTS.length) newSeenIds = [];
+  // If all 6 done, start fresh (but still exclude the one we just did)
+  const newSeenTypes = completedTypes.length >= DOC_TYPES.length
+    ? [state.doc.type]  // reset but exclude last shown
+    : completedTypes;
 
+  // Pick next doc excluding all seen types
   const newDoc = getRandomDoc(newSeenTypes);
 
   state = {
@@ -626,7 +629,7 @@ function nextDoc() {
     lucaData: null,
     lucaStatus: 'idle',
     sheetOpen: false,
-    seenIds: [...newSeenIds, newDoc.id],
+    seenIds: [...state.seenIds, state.doc.id, newDoc.id],
     seenTypes: [...newSeenTypes, newDoc.type],
   };
 
