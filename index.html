@@ -426,8 +426,8 @@ async function renderPDF(doc) {
     const pdfDoc = await pdfjsLib.getDocument(url).promise;
     const page = await pdfDoc.getPage(1);
 
-    const MAX_WIDTH = 760;
-    const naturalScale = 0.94;
+    const MAX_WIDTH = 874;
+    const naturalScale = 1.08;
     const viewport = page.getViewport({ scale: naturalScale });
     const ctx = canvas.getContext('2d');
     canvas.width = viewport.width;
