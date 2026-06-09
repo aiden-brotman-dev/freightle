@@ -22,121 +22,60 @@ exports.handler = async function(event) {
     return {
       statusCode: 500,
       headers: { 'Access-Control-Allow-Origin': '*' },
-      body: JSON.stringify({ error: 'Missing EXTEND_API_KEY environment variable' }),
+      body: JSON.stringify({ error: 'Missing EXTEND_API_KEY' }),
     };
   }
 
-  let filename;
+  let body;
   try {
-    ({ filename } = JSON.parse(event.body));
+    body = JSON.parse(event.body);
   } catch {
-    return {
-      statusCode: 400,
-      headers: { 'Access-Control-Allow-Origin': '*' },
-      body: JSON.stringify({ error: 'Invalid JSON body' }),
-    };
+    return { statusCode: 400, headers: { 'Access-Control-Allow-Origin': '*' }, body: JSON.stringify({ error: 'Invalid JSON' }) };
   }
 
-  // Build the public URL of the PDF
-  const host = event.headers['x-forwarded-host'] || event.headers['host'];
-  const proto = 'https';
-  const encodedFilename = filename.replace(/ /g, '%20').replace(/\(/g, '%28').replace(/\)/g, '%29');
-  const pdfUrl = `${proto}://${host}/${encodedFilename}`;
+  const headers = {
+    'Authorization': `Bearer ${EXTEND_API_KEY}`,
+    'Content-Type': 'application/json',
+    'x-extend-api-version': '2026-02-09',
+  };
 
-  console.log('Calling Extend with PDF URL:', pdfUrl);
-  console.log('Extractor ID:', EXTRACTOR_ID);
+  // MODE 1: Start a new extraction run
+  if (body.filename) {
+    const host = event.headers['x-forwarded-host'] || event.headers['host'];
+    const encoded = body.filename.replace(/ /g, '%20').replace(/\(/g, '%28').replace(/\)/g, '%29');
+    const pdfUrl = `https://${host}/${encoded}`;
 
-  try {
     const res = await fetch('https://api.extend.ai/v1/extract_runs', {
       method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${EXTEND_API_KEY}`,
-        'Content-Type': 'application/json',
-        'x-extend-api-version': '2026-02-09',
-      },
+      headers,
       body: JSON.stringify({
         extractor: { id: EXTRACTOR_ID },
         file: { url: pdfUrl },
       }),
     });
 
-    const responseText = await res.text();
-    console.log('Extend response status:', res.status);
-    console.log('Extend response body:', responseText);
-
-    if (!res.ok) {
-      return {
-        statusCode: 502,
-        headers: { 'Access-Control-Allow-Origin': '*' },
-        body: JSON.stringify({ error: 'Extend API error', status: res.status, detail: responseText }),
-      };
-    }
-
-    const data = JSON.parse(responseText);
-
-    // If already complete
-    if (data.status === 'completed' && data.output) {
-      return {
-        statusCode: 200,
-        headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
-        body: JSON.stringify(data.output),
-      };
-    }
-
-    // Poll for completion
-    const runId = data.id;
-    if (!runId) {
-      return {
-        statusCode: 200,
-        headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
-        body: JSON.stringify(data),
-      };
-    }
-
-    for (let i = 0; i < 20; i++) {
-      await new Promise(r => setTimeout(r, 2000));
-
-      const pollRes = await fetch(`https://api.extend.ai/v1/extract_runs/${runId}`, {
-        headers: {
-          'Authorization': `Bearer ${EXTEND_API_KEY}`,
-          'x-extend-api-version': '2026-02-09',
-        },
-      });
-
-      const pollText = await pollRes.text();
-      console.log(`Poll ${i+1} status:`, pollRes.status, pollText.slice(0, 200));
-
-      const pollData = JSON.parse(pollText);
-
-      if (pollData.status === 'completed' && pollData.output) {
-        return {
-          statusCode: 200,
-          headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
-          body: JSON.stringify(pollData.output),
-        };
-      }
-
-      if (pollData.status === 'failed') {
-        return {
-          statusCode: 502,
-          headers: { 'Access-Control-Allow-Origin': '*' },
-          body: JSON.stringify({ error: 'Extraction failed', detail: pollData }),
-        };
-      }
-    }
-
+    const data = await res.json();
     return {
-      statusCode: 504,
-      headers: { 'Access-Control-Allow-Origin': '*' },
-      body: JSON.stringify({ error: 'Extraction timed out after 40 seconds' }),
-    };
-
-  } catch (err) {
-    console.error('Function error:', err);
-    return {
-      statusCode: 500,
-      headers: { 'Access-Control-Allow-Origin': '*' },
-      body: JSON.stringify({ error: err.message }),
+      statusCode: 200,
+      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+      body: JSON.stringify({ runId: data.id, status: data.status }),
     };
   }
+
+  // MODE 2: Poll for result
+  if (body.runId) {
+    const res = await fetch(`https://api.extend.ai/v1/extract_runs/${body.runId}`, { headers });
+    const data = await res.json();
+
+    return {
+      statusCode: 200,
+      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+      body: JSON.stringify({
+        status: data.status,
+        output: data.output || null,
+      }),
+    };
+  }
+
+  return { statusCode: 400, headers: { 'Access-Control-Allow-Origin': '*' }, body: JSON.stringify({ error: 'Missing filename or runId' }) };
 };
