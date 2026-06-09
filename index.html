@@ -37,7 +37,7 @@ html,body{min-height:100%;background:#080d14;color:#e2e8f0;font-family:'DM Sans'
 #prompt-title{font-size:16px;font-weight:600;color:#f1f5f9;line-height:1.3;margin:6px 0 0;}
 /* Two-column doc+controls layout */
 #doc-and-controls{display:flex;gap:16px;align-items:flex-start;}
-#pdf-wrap{flex-shrink:0;width:380px;max-width:380px;position:relative;background:#1a1a1a;border:1px solid #1e293b;border-radius:12px;overflow:hidden;min-height:300px;display:flex;align-items:flex-start;justify-content:center;}
+#pdf-wrap{flex-shrink:0;width:560px;max-width:560px;position:relative;background:#1a1a1a;border:1px solid #1e293b;border-radius:12px;overflow:hidden;min-height:300px;display:flex;align-items:flex-start;justify-content:center;}
 #controls-col{flex:1;min-width:0;display:flex;flex-direction:column;gap:14px;}
 /* Result inline stars */
 #result-inline{display:flex;align-items:center;gap:10px;margin-bottom:4px;}
@@ -435,10 +435,15 @@ async function renderPDF(doc) {
     const pdfDoc = await pdfjsLib.getDocument(url).promise;
     const page = await pdfDoc.getPage(1);
 
-    const viewport = page.getViewport({ scale: 0.45 });
+    const MAX_WIDTH = 550;
+    const naturalScale = 0.65;
+    const viewport = page.getViewport({ scale: naturalScale });
     const ctx = canvas.getContext('2d');
     canvas.width = viewport.width;
     canvas.height = viewport.height;
+    // Force explicit pixel size so CSS can't override it
+    canvas.style.width = Math.min(viewport.width, MAX_WIDTH) + 'px';
+    canvas.style.height = 'auto';
 
     await page.render({ canvasContext: ctx, viewport }).promise;
 
