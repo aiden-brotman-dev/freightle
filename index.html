@@ -20,6 +20,22 @@ html,body{min-height:100%;background:#080d14;color:#e2e8f0;font-family:'DM Sans'
 ::-webkit-scrollbar{width:4px;}
 ::-webkit-scrollbar-thumb{background:#1e293b;border-radius:2px;}
 
+/* INTRO SCREEN */
+#intro-overlay{position:fixed;inset:0;background:#080d14;z-index:300;display:flex;align-items:center;justify-content:center;padding:20px;animation:fadeIn 0.3s ease;}
+#intro-card{max-width:480px;width:100%;display:flex;flex-direction:column;align-items:center;gap:20px;text-align:center;}
+#intro-logo{display:flex;align-items:center;gap:8px;}
+#intro-logo-text{font-family:'Space Mono',monospace;font-weight:700;font-size:18px;letter-spacing:0.15em;color:#f1f5f9;}
+#intro-badge{background:#1e3a5f;color:#60a5fa;font-size:9px;font-weight:600;letter-spacing:0.1em;padding:2px 5px;border-radius:4px;}
+#intro-title{font-size:32px;font-weight:700;color:#f1f5f9;line-height:1.2;letter-spacing:-0.01em;}
+#intro-sub{font-size:15px;color:#475569;line-height:1.6;max-width:380px;}
+#intro-bullets{display:flex;flex-direction:column;gap:10px;width:100%;background:#0a1020;border:1px solid #1e293b;border-radius:12px;padding:16px 20px;}
+.intro-bullet{display:flex;align-items:center;gap:12px;font-size:13px;color:#94a3b8;text-align:left;}
+.intro-bullet-icon{font-size:16px;flex-shrink:0;}
+#intro-btn{width:100%;background:linear-gradient(135deg,#1d4ed8,#3b82f6);color:#fff;border:none;padding:15px 24px;border-radius:10px;font-size:15px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;letter-spacing:0.02em;transition:filter 0.15s;}
+#intro-btn:hover{filter:brightness(1.1);}
+#intro-powered{display:flex;align-items:center;gap:6px;font-size:11px;color:#334155;}
+#intro-extend-link{color:#60a5fa;text-decoration:none;font-weight:600;}
+#intro-extend-link:hover{text-decoration:underline;}
 #topbar{background:#0a1020;border-bottom:1px solid #1e293b;padding:0 16px;position:sticky;top:0;z-index:100;}
 #topbar-inner{max-width:1200px;margin:0 auto;height:52px;display:flex;align-items:center;justify-content:space-between;}
 .logo{display:flex;align-items:center;gap:8px;}
@@ -30,14 +46,14 @@ html,body{min-height:100%;background:#080d14;color:#e2e8f0;font-family:'DM Sans'
 #mode-btn{background:transparent;border:1px solid #1e293b;color:#94a3b8;padding:5px 12px;border-radius:6px;font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif;}
 #mode-btn:hover{border-color:#3b82f6;color:#e2e8f0;}
 
-#main{max-width:1400px;margin:0 auto;width:100%;padding:16px 24px;display:grid;grid-template-columns:280px 1fr 280px;gap:20px;height:calc(100vh - 52px);overflow:hidden;align-items:start;}
+#main{max-width:1400px;margin:0 auto;width:100%;padding:16px 24px;display:grid;grid-template-columns:280px 1fr;gap:20px;height:calc(100vh - 52px);overflow:hidden;align-items:start;}
 
 .prompt-chip{display:inline-flex;align-self:flex-start;background:#0f1f35;border:1px solid #1e3a5f;color:#60a5fa;font-size:11px;font-weight:500;padding:4px 12px;border-radius:20px;letter-spacing:0.03em;}
 #prompt-title{font-size:16px;font-weight:600;color:#f1f5f9;line-height:1.3;margin:4px 0 0;}
-/* Three column: controls | pdf | luca */
+/* Three column: controls | pdf | results */
 #controls-col{display:flex;flex-direction:column;gap:10px;height:calc(100vh - 84px);overflow-y:auto;}
 #pdf-wrap{position:relative;background:transparent;border:none;border-radius:12px;overflow-y:auto;overflow-x:hidden;height:calc(100vh - 84px);display:flex;align-items:flex-start;justify-content:center;}
-#luca-sidebar{width:100%;height:calc(100vh - 84px);overflow-y:auto;}
+
 #guess-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;width:100%;}
 /* Result inline stars */
 #result-inline{display:flex;align-items:center;gap:10px;margin-bottom:4px;}
@@ -79,72 +95,69 @@ html,body{min-height:100%;background:#080d14;color:#e2e8f0;font-family:'DM Sans'
 }
 #pdf-error{display:none;flex-direction:column;align-items:center;gap:8px;color:#ef4444;font-size:13px;padding:40px;}
 
-/* HINTS */
-#hint-area{display:flex;flex-direction:column;gap:8px;}
-.hint-item{display:flex;align-items:flex-start;gap:8px;background:#0f1a2e;border:1px solid #1e3a5f;border-radius:8px;padding:7px 10px;animation:slideIn 0.25s ease;}
-.hint-text{color:#93c5fd;line-height:1.3;font-size:12px;}
+
 
 /* GUESS BUTTONS */
 #guess-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
 .guess-btn{background:#0d1627;border:1px solid #1e293b;color:#94a3b8;padding:9px 12px;border-radius:8px;font-size:12px;font-weight:500;cursor:pointer;text-align:left;font-family:'DM Sans',sans-serif;transition:all 0.15s;line-height:1.3;}
 .guess-btn:hover:not(:disabled):not(.wrong){border-color:#3b82f6;color:#e2e8f0;background:#0f1f35;}
-.guess-btn.wrong{background:#1a0a0a;border-color:#3f1010;color:#6b1f1f;cursor:not-allowed;}
-.guess-btn.correct{background:#0a1f0f;border-color:#166534;color:#4ade80;cursor:not-allowed;}
+.guess-btn.wrong{background:#2a0a0a;border-color:#ef4444;color:#ef4444;cursor:not-allowed;text-decoration:line-through;}
+.guess-btn.correct{background:#052e16;border-color:#4ade80;color:#4ade80;cursor:not-allowed;font-weight:700;box-shadow:0 0 12px rgba(74,222,128,0.25);}
 .guess-btn.used{opacity:0.25;cursor:not-allowed;}
 .guess-btn:disabled{cursor:not-allowed;opacity:0.5;}
 
 /* LUCA SIDEBAR */
-#luca-sidebar{background:#0a1020;border:1px solid #1e293b;border-radius:12px;}
-.luca-header{display:flex;align-items:center;gap:12px;padding:14px 16px;}
-.luca-avatar{width:34px;height:34px;background:linear-gradient(135deg,#1d4ed8,#3b82f6);border-radius:9px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px;color:#fff;flex-shrink:0;}
-.luca-name{font-size:14px;font-weight:600;color:#f1f5f9;}
-.luca-role{font-size:10px;color:#475569;}
-.luca-status{margin-left:auto;display:flex;align-items:center;gap:5px;}
-.luca-pulse{width:7px;height:7px;background:#22c55e;border-radius:50%;animation:pulse 2s infinite;}
-.luca-online{font-size:10px;color:#22c55e;}
-.luca-divider{border-bottom:1px solid #1e293b;margin:0 16px;}
 
-.luca-idle{padding:28px 16px;text-align:center;}
-.luca-idle-icon{font-size:28px;opacity:0.4;margin-bottom:14px;}
-.luca-idle-text{font-size:13px;color:#475569;line-height:1.6;margin-bottom:16px;}
-.luca-idle-bar{width:100%;height:3px;background:#1e293b;border-radius:2px;overflow:hidden;}
-.luca-idle-fill{height:100%;background:linear-gradient(90deg,#1d4ed8,#3b82f6);animation:barFill 2s ease-in-out infinite alternate;}
 
-.luca-processing{padding:20px 16px;display:flex;flex-direction:column;gap:12px;}
-.luca-processing-label{font-size:9px;font-weight:600;letter-spacing:0.1em;color:#334155;text-transform:uppercase;}
-.luca-processing-steps{display:flex;flex-direction:column;gap:8px;}
-.luca-step{display:flex;align-items:center;gap:8px;font-size:12px;color:#475569;}
-.luca-step.active{color:#60a5fa;}
-.luca-step.done{color:#22c55e;}
-.luca-step-dot{width:6px;height:6px;border-radius:50%;background:currentColor;flex-shrink:0;}
-.luca-step-spinner{width:10px;height:10px;border:1.5px solid #1e3a5f;border-top-color:#3b82f6;border-radius:50%;animation:spin 0.8s linear infinite;flex-shrink:0;}
 
-.luca-content{padding:16px;display:flex;flex-direction:column;gap:18px;}
-.luca-section{display:flex;flex-direction:column;gap:7px;}
-.luca-section-label{font-size:9px;font-weight:600;letter-spacing:0.1em;color:#334155;text-transform:uppercase;}
-.luca-doc-type{font-size:15px;font-weight:600;color:#60a5fa;font-family:'Space Mono',monospace;}
-.luca-fields{background:#080d14;border:1px solid #1e293b;border-radius:8px;padding:10px;display:flex;flex-direction:column;gap:6px;animation:slideIn 0.3s ease;}
-.luca-field-row{display:flex;flex-direction:column;gap:2px;padding-bottom:6px;border-bottom:1px solid #111827;}
-.luca-field-row:last-child{border-bottom:none;padding-bottom:0;}
-.luca-field-key{font-family:'Space Mono',monospace;font-size:9px;color:#60a5fa;}
-.luca-field-val{font-size:11px;color:#a7f3d0;word-break:break-word;line-height:1.4;}
-.luca-field-val.empty{color:#334155;font-style:italic;}
-.luca-note{font-size:12px;color:#94a3b8;line-height:1.6;background:#080d14;border:1px solid #1e3a5f;border-radius:8px;padding:10px 12px;}
-.luca-timing{font-size:10px;color:#334155;padding-top:8px;border-top:1px solid #111827;}
-.luca-error{font-size:12px;color:#ef4444;padding:16px;line-height:1.5;}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 /* MOBILE TAB */
-#luca-tab{display:none;position:fixed;bottom:0;left:0;right:0;z-index:90;background:#0a1020;border-top:1px solid #1e3a5f;padding:0 20px;height:60px;align-items:center;justify-content:space-between;cursor:pointer;border-left:none;border-right:none;border-bottom:none;font-family:'DM Sans',sans-serif;}
-.luca-tab-left{display:flex;align-items:center;gap:10px;}
-.luca-tab-avatar{width:32px;height:32px;background:linear-gradient(135deg,#1d4ed8,#3b82f6);border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;color:#fff;}
-.luca-tab-label{font-size:14px;font-weight:600;color:#e2e8f0;}
-.luca-tab-badge{background:#0f3020;border:1px solid #166534;color:#4ade80;font-size:10px;font-weight:600;padding:2px 7px;border-radius:10px;display:none;}
-.luca-tab-chevron{font-size:12px;color:#475569;}
 
-#luca-sheet{display:none;position:fixed;bottom:60px;left:0;right:0;z-index:89;background:#0a1020;border:1px solid #1e293b;border-radius:16px 16px 0 0;max-height:70vh;flex-direction:column;box-shadow:0 -8px 40px rgba(0,0,0,0.6);animation:sheetUp 0.25s ease;}
-#luca-sheet.open{display:flex;}
-.sheet-handle{width:36px;height:4px;background:#1e293b;border-radius:2px;margin:12px auto 0;flex-shrink:0;}
-#sheet-scroll{overflow-y:auto;flex:1;padding-bottom:16px;}
+
+
+
+
+
+
+
+
+
+
 
 /* SUCCESS */
 #result-banner{background:#0d1627;border:1px solid #1e3a5f;border-radius:12px;padding:16px;display:none;flex-direction:column;gap:10px;animation:slideIn 0.3s ease;}
@@ -159,14 +172,15 @@ html,body{min-height:100%;background:#080d14;color:#e2e8f0;font-family:'DM Sans'
 .success-divider{width:36px;height:1px;background:#1e293b;margin:4px 0;}
 .success-fact{font-size:12px;color:#64748b;line-height:1.6;text-align:left;background:#080d14;padding:12px;border-radius:8px;border:1px solid #1e293b;width:100%;}
 #next-btn{margin-top:6px;width:100%;background:linear-gradient(135deg,#1d4ed8,#3b82f6);color:#fff;border:none;padding:12px 24px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;}
+#results-btn{margin-top:6px;width:100%;background:linear-gradient(135deg,#065f46,#10b981);color:#fff;border:none;padding:12px 24px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;animation:pulse 1.5s ease infinite;}
 #end-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);backdrop-filter:blur(6px);align-items:center;justify-content:center;z-index:200;padding:20px;animation:fadeIn 0.3s ease;}
 #end-overlay.open{display:flex;}
 #next-btn:hover{filter:brightness(1.1);}
 
 @media(max-width:900px){
   #main{grid-template-columns:1fr;height:auto;overflow:auto;}
-  #luca-sidebar{display:none;}
-  #luca-tab{display:flex;}
+  
+  
   #controls-col{height:auto;}
   #pdf-wrap{height:auto;}
   #game-area{padding-bottom:72px;}
@@ -188,10 +202,32 @@ html,body{min-height:100%;background:#080d14;color:#e2e8f0;font-family:'DM Sans'
     </div>
     <div id="topbar-right">
       <button id="mode-btn">🎲 Free Play</button>
-      <span style="font-family:'Space Mono',monospace;font-size:10px;color:#334155;">SHP-2024-0441</span>
+      <a href="https://dashboard.extend.ai/auth" target="_blank" id="powered-badge">⚡ Powered by <span class="ext-name">Extend</span></a>
     </div>
   </div>
 </header>
+
+<!-- INTRO SCREEN -->
+<div id="intro-overlay">
+  <div id="intro-card">
+    <div id="intro-logo">
+      <span style="font-size:22px;color:#3b82f6;">⬡</span>
+      <span id="intro-logo-text">FREIGHTLE</span>
+      <span id="intro-badge">BETA</span>
+    </div>
+    <h1 id="intro-title">Can you identify the document?</h1>
+    <p id="intro-sub">6 real freight documents. 3 guesses each. How well do you know global trade?</p>
+    <div id="intro-bullets">
+      <div class="intro-bullet"><span class="intro-bullet-icon">📄</span><span>Real documents from real shipments</span></div>
+      <div class="intro-bullet"><span class="intro-bullet-icon">⚡</span><span>Extraction powered by Extend</span></div>
+    </div>
+    <button id="intro-btn" onclick="startGame()">Start Playing →</button>
+    <div id="intro-powered">
+      <span>Extraction powered by</span>
+      <a href="https://dashboard.extend.ai/auth" target="_blank" id="intro-extend-link">Extend</a>
+    </div>
+  </div>
+</div>
 
 <div id="main">
 
@@ -201,7 +237,6 @@ html,body{min-height:100%;background:#080d14;color:#e2e8f0;font-family:'DM Sans'
       <span class="prompt-chip" id="mode-chip">📅 Daily Challenge</span>
       <h2 id="prompt-title">What type of logistics document is this?</h2>
     </div>
-    <div id="hint-area"></div>
     <div id="guess-grid"></div>
     <div id="result-banner" style="display:none;">
       <div id="result-inline">
@@ -211,6 +246,7 @@ html,body{min-height:100%;background:#080d14;color:#e2e8f0;font-family:'DM Sans'
       <div id="result-type"></div>
       <div id="result-fact"></div>
       <button id="next-btn" onclick="nextDoc()">Next Document →</button>
+      <button id="results-btn" onclick="nextDoc()" style="display:none;">See Your Results →</button>
     </div>
   </div>
 
@@ -221,25 +257,8 @@ html,body{min-height:100%;background:#080d14;color:#e2e8f0;font-family:'DM Sans'
     <canvas id="pdf-canvas" style="display:none;"></canvas>
   </div>
 
-  <!-- RIGHT: Luca -->
-  <aside id="luca-sidebar">
-    <div id="luca-sidebar-content"></div>
-  </aside>
-
 </div>
-
-<button id="luca-tab" onclick="toggleSheet()">
-  <div class="luca-tab-left">
-    <div class="luca-tab-avatar">L</div>
-    <span class="luca-tab-label">Luca's Breakdown</span>
-    <span class="luca-tab-badge" id="luca-tab-badge">Ready</span>
-  </div>
-  <span class="luca-tab-chevron" id="tab-chevron">▲</span>
-</button>
-
-<div id="luca-sheet">
-  <div class="sheet-handle"></div>
-  <div id="sheet-scroll"></div>
+<div id="sheet-scroll"></div>
 </div>
 
 <!-- end-overlay below -->
@@ -255,7 +274,7 @@ html,body{min-height:100%;background:#080d14;color:#e2e8f0;font-family:'DM Sans'
     <div class="success-divider"></div>
     <div style="font-size:12px;color:#475569;line-height:1.6;text-align:center;">
       You just worked through 6 real freight documents from 6 different countries.<br>
-      This is what Luca does — automatically — on every shipment.
+      This is what Extend's extraction API does — automatically — on every shipment.
     </div>
     <div style="width:100%;background:#0a1020;border:1px solid #1e3a5f;border-radius:10px;padding:16px;text-align:center;">
       <div style="font-size:13px;font-weight:600;color:#f1f5f9;margin-bottom:6px;">Want to extract your own documents?</div>
@@ -386,8 +405,6 @@ let state = {
   guessCount: 0,
   wrongGuesses: [],
   solved: false,
-  lucaData: null,
-  lucaStatus: "idle",
   sheetOpen: false,
 };
 
@@ -465,22 +482,10 @@ async function renderPDF(doc) {
 }
 
 // ── EXTEND API ────────────────────────────────────────────────────────────────
-async function callExtend(doc) {
-  // Use pre-extracted data instantly — no API call needed
-  state.lucaData = doc.extracted;
-  state.lucaStatus = 'done';
-  renderLuca();
-  if (state.solved) showSuccess();
-}
+
 
 // ── RENDER ────────────────────────────────────────────────────────────────────
-function renderHints() {
-  const area = document.getElementById('hint-area');
-  if (state.guessCount === 0) { area.innerHTML = ''; return; }
-  area.innerHTML = state.doc.hints.slice(0, state.guessCount).map(h => `
-    <div class="hint-item"><span>💡</span><span class="hint-text">${h}</span></div>
-  `).join('');
-}
+function renderHints() {}
 
 function renderGuessButtons() {
   const maxed = state.guessCount >= 3;
@@ -494,93 +499,6 @@ function renderGuessButtons() {
     </button>`;
   }).join('');
 }
-
-function lucaInnerHTML() {
-  const doc = state.doc;
-
-  if (state.lucaStatus === 'idle') {
-    return `<div class="luca-idle">
-      <div class="luca-idle-icon">🔍</div>
-      <p class="luca-idle-text">Luca is standing by.<br>Guess the document type to unlock the extraction.</p>
-    </div>`;
-  }
-
-  if (state.lucaStatus === 'loading') {
-    return `<div class="luca-processing">
-      <div class="luca-processing-label">Processing Document</div>
-      <div class="luca-processing-steps">
-        <div class="luca-step done"><div class="luca-step-dot"></div>Document received</div>
-        <div class="luca-step active"><div class="luca-step-spinner"></div>Running OCR & extraction...</div>
-        <div class="luca-step"><div class="luca-step-dot"></div>Structuring fields</div>
-        <div class="luca-step"><div class="luca-step-dot"></div>Ready</div>
-      </div>
-    </div>`;
-  }
-
-  if (state.lucaStatus === 'error') {
-    return `<div class="luca-error">⚠️ Extraction failed. Check that the Netlify function is deployed and your API key is set.</div>`;
-  }
-
-  // done
-  const d = state.lucaData || {};
-  const fields = [
-    { key: 'shipper', label: 'Shipper' },
-    { key: 'consignee', label: 'Consignee' },
-    { key: 'origin', label: 'Origin' },
-    { key: 'destination', label: 'Destination' },
-    { key: 'carrier', label: 'Carrier' },
-    { key: 'reference_number', label: 'Reference No.' },
-    { key: 'date', label: 'Date' },
-    { key: 'goods_description', label: 'Goods' },
-    { key: 'total_value', label: 'Total Value' },
-  ];
-
-  const fieldsHTML = fields.map(f => {
-    const val = d[f.key];
-    const isEmpty = !val || val === 'null' || val === 'N/A' || val === '';
-    return `<div class="luca-field-row">
-      <span class="luca-field-key">${f.key}</span>
-      <span class="luca-field-val ${isEmpty ? 'empty' : ''}">${isEmpty ? 'not found' : val}</span>
-    </div>`;
-  }).join('');
-
-  return `<div class="luca-content">
-    <div class="luca-section">
-      <div class="luca-section-label">Document Type</div>
-      <div class="luca-doc-type">${doc.type}</div>
-    </div>
-    <div class="luca-section">
-      <div class="luca-section-label">Extracted Fields</div>
-      <div class="luca-fields">${fieldsHTML}</div>
-    </div>
-    <div class="luca-section">
-      <div class="luca-section-label">Luca's Assessment</div>
-      <div class="luca-note">${doc.lucaNote}</div>
-    </div>
-    <div class="luca-timing">⚡ Luca processed this via Extend in real time.</div>
-  </div>`;
-}
-
-function lucaShell(inner) {
-  return `
-    <div class="luca-header">
-      <div class="luca-avatar">L</div>
-      <div><div class="luca-name">Luca</div><div class="luca-role">AI Freight Agent · Zencargo</div></div>
-      <div class="luca-status"><div class="luca-pulse"></div><span class="luca-online">Active</span></div>
-    </div>
-    <div class="luca-divider"></div>
-    ${inner}
-  `;
-}
-
-function renderLuca() {
-  const inner = lucaInnerHTML();
-  document.getElementById('luca-sidebar-content').innerHTML = lucaShell(inner);
-  document.getElementById('sheet-scroll').innerHTML = lucaShell(inner);
-  const badge = document.getElementById('luca-tab-badge');
-  badge.style.display = state.lucaStatus === 'done' ? 'inline' : 'none';
-}
-
 function renderModeUI() {
   document.getElementById('mode-chip').textContent = state.mode === 'daily' ? '📅 Daily Challenge' : '🎲 Free Play';
   document.getElementById('mode-btn').textContent = state.mode === 'daily' ? '🎲 Free Play' : '📅 Daily';
@@ -590,7 +508,6 @@ function renderAll() {
   renderModeUI();
   renderHints();
   renderGuessButtons();
-  renderLuca();
 }
 
 // ── ACTIONS ───────────────────────────────────────────────────────────────────
@@ -599,40 +516,29 @@ function handleGuess(type) {
   state.guessCount++;
 
   if (type === state.doc.type) {
-    // Correct — reveal Luca and show success
+    // Correct
     state.solved = true;
-    callExtend(state.doc);
-    if (window.innerWidth < 768) {
-      state.sheetOpen = true;
-      document.getElementById('luca-sheet').classList.add('open');
-      document.getElementById('tab-chevron').textContent = '▼';
-    }
     renderAll();
     showSuccess();
+    // On mobile, pulse the tab to guide user instead of auto-opening
+    
   } else {
     state.wrongGuesses.push(type);
     if (state.guessCount >= 3) {
-      // All 3 wrong — reveal Luca and show failure
+      // All 3 wrong
       state.solved = true;
-      callExtend(state.doc);
-      if (window.innerWidth < 768) {
-        state.sheetOpen = true;
-        document.getElementById('luca-sheet').classList.add('open');
-        document.getElementById('tab-chevron').textContent = '▼';
-      }
-      renderAll();
+        renderAll();
       showFailure();
+      
     } else {
       renderAll();
     }
   }
 }
 
-function toggleSheet() {
-  state.sheetOpen = !state.sheetOpen;
-  document.getElementById('luca-sheet').classList.toggle('open', state.sheetOpen);
-  document.getElementById('tab-chevron').textContent = state.sheetOpen ? '▼' : '▲';
-}
+
+
+
 
 function showSuccess() {
   const doc = state.doc, gc = state.guessCount;
@@ -645,10 +551,10 @@ function showSuccess() {
   document.getElementById('result-fact').innerHTML = `<strong>Why it matters:</strong> ${doc.facts}`;
   document.getElementById('result-banner').style.display = 'flex';
   document.getElementById('result-banner').style.flexDirection = 'column';
-  // If this is the last doc, go straight to end
+  // If this is the last doc, swap Next button for See Results button
   if (usedTypes.length >= DOC_TYPES.length - 1) {
     document.getElementById('next-btn').style.display = 'none';
-    setTimeout(() => nextDoc(), 2200);
+    document.getElementById('results-btn').style.display = 'block';
   }
 }
 
@@ -661,24 +567,17 @@ function showFailure() {
   document.getElementById('result-fact').innerHTML = `<strong>Why it matters:</strong> ${state.doc.facts}`;
   document.getElementById('result-banner').style.display = 'flex';
   document.getElementById('result-banner').style.flexDirection = 'column';
-  // If this is the last doc, go straight to end
+  // If this is the last doc, swap Next button for See Results button
   if (usedTypes.length >= DOC_TYPES.length - 1) {
     document.getElementById('next-btn').style.display = 'none';
-    setTimeout(() => nextDoc(), 2200);
+    document.getElementById('results-btn').style.display = 'block';
   }
 }
 
 function nextDoc() {
   document.getElementById('result-banner').style.display = 'none';
   document.getElementById('next-btn').style.display = '';
-  document.getElementById('luca-sheet').classList.remove('open');
-
-  // Record score for this round
-  scorecard.push({
-    type: state.doc.type,
-    guessCount: state.guessCount,
-    correct: state.wrongGuesses.length < 3 || state.solved,
-  });
+  document.getElementById('results-btn').style.display = 'none';
 
   // Mark current doc type as used
   if (!usedTypes.includes(state.doc.type)) usedTypes.push(state.doc.type);
@@ -689,9 +588,8 @@ function nextDoc() {
     return;
   }
 
-  // Pick next doc
+  // Pick next doc — do NOT add to usedTypes yet (will be added when this round ends)
   const newDoc = getNextDoc();
-  if (!usedTypes.includes(newDoc.type)) usedTypes.push(newDoc.type);
 
   state = {
     mode: state.mode,
@@ -699,18 +597,17 @@ function nextDoc() {
     guessCount: 0,
     wrongGuesses: [],
     solved: false,
-    lucaData: null,
-    lucaStatus: 'idle',
     sheetOpen: false,
   };
 
-  document.getElementById('tab-chevron').textContent = '▲';
   renderAll();
   renderPDF(state.doc);
 }
 
 function showEndScreen() {
   document.getElementById('result-banner').style.display = 'none';
+  document.getElementById('results-btn').style.display = 'none';
+  document.getElementById('next-btn').style.display = '';
 
   const totalPts = scorecard.reduce((sum, r) => {
     return sum + (r.correct ? (r.guessCount === 1 ? 3 : r.guessCount === 2 ? 2 : 1) : 0);
@@ -750,8 +647,7 @@ function playAgain() {
   scorecard.length = 0;
   const newDoc = getNextDoc();
   usedTypes.push(newDoc.type);
-  state = { mode: 'free', doc: newDoc, guessCount: 0, wrongGuesses: [], solved: false, lucaData: null, lucaStatus: 'idle', sheetOpen: false };
-  document.getElementById('tab-chevron').textContent = '▲';
+  state = { mode: 'free', doc: newDoc, guessCount: 0, wrongGuesses: [], solved: false, sheetOpen: false };
   renderAll();
   renderPDF(state.doc);
 }
@@ -761,18 +657,21 @@ document.getElementById('mode-btn').addEventListener('click', () => {
   usedTypes.length = 0; // reset on mode switch
   const newDoc = state.mode === 'daily' ? getTodayDoc() : getNextDoc();
   if (!usedTypes.includes(newDoc.type)) usedTypes.push(newDoc.type);
-  state = { mode: state.mode, doc: newDoc, guessCount: 0, wrongGuesses: [], solved: false, lucaData: null, lucaStatus: 'idle', sheetOpen: false };
-  document.getElementById('luca-sheet').classList.remove('open');
-  document.getElementById('tab-chevron').textContent = '▲';
+  state = { mode: state.mode, doc: newDoc, guessCount: 0, wrongGuesses: [], solved: false, sheetOpen: false };
+  
   renderAll();
   renderPDF(state.doc);
 });
 
 // ── INIT ──────────────────────────────────────────────────────────────────────
-state.doc = getTodayDoc();
-usedTypes.push(state.doc.type);
-renderAll();
-renderPDF(state.doc);
+// Show intro screen first — game starts on button click
+function startGame() {
+  document.getElementById('intro-overlay').style.display = 'none';
+  state.doc = getTodayDoc();
+  usedTypes.push(state.doc.type);
+  renderAll();
+  renderPDF(state.doc);
+}
 </script>
 </body>
 </html>
